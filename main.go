@@ -33,13 +33,22 @@ type Probe interface {
 }
 
 type BaseProbe struct {
-	name   string
-	parent Probe
+	name     string
+	parent   Probe
+	children ProbeMap
 
 	YType        string        `yaml:"type"`
 	YDescription string        `yaml:"description"`
 	YUpdateEvery time.Duration `yaml:"update_every"`
-	children     ProbeMap      `yaml:"-"`
+}
+
+func (bp *BaseProbe) nextRun(stop <-chan struct{}) bool {
+	select {
+	case <-stop:
+		return false
+	case <-time.After(bp.UpdateEvery()):
+		return true
+	}
 }
 
 func (bp *BaseProbe) RunLoop(c *Config, ch <-chan struct{}) error {
@@ -63,46 +72,15 @@ func (bp *BaseProbe) Parent() Probe {
 }
 
 func (bp *BaseProbe) Type() string {
-	t := bp.YType
-
-	p := bp.Parent()
-	for t == "" && !reflect.ValueOf(p).IsNil() {
-		t = p.Type()
-		p = p.Parent()
-	}
-
-	bp.YType = t
-	return t
+	return bp.YType
 }
 
 func (bp *BaseProbe) Description() string {
-	t := bp.YDescription
-
-	p := bp.Parent()
-	for t == "" && !reflect.ValueOf(p).IsNil() {
-		t = p.Description()
-		p = p.Parent()
-	}
-
-	bp.YDescription = t
-	return t
+	return bp.YDescription
 }
 
 func (bp *BaseProbe) UpdateEvery() time.Duration {
-	d := bp.YUpdateEvery
-
-	p := bp.Parent()
-	for d == 0 && !reflect.ValueOf(p).IsNil() {
-		d = p.UpdateEvery()
-		p = p.Parent()
-	}
-
-	if d == 0 {
-		d = 30 * time.Second // default update interval
-	}
-
-	bp.YUpdateEvery = d
-	return d
+	return bp.YUpdateEvery
 }
 
 func (bp *BaseProbe) Children() ProbeMap {
@@ -142,14 +120,12 @@ func (p *HTTPProbe) RunLoop(c *Config, stop <-chan struct{}) error {
 		return fmt.Errorf("HTTPProbe: url is required")
 	}
 
-loop:
 	for {
-		select {
-		case <-stop:
-			break loop
-		case <-time.After(p.UpdateEvery()):
-			log.Printf("%s: works", p.Name())
+		if !p.nextRun(stop) {
+			break
 		}
+
+		log.Printf("%s: works", p.Name())
 	}
 
 	return nil
@@ -193,6 +169,32 @@ func isMappingNodeWithScalarValues(node *yaml.Node) bool {
 	return true
 }
 
+func instantiateBaseProbe(parent *BaseProbe, n *yaml.Node, name string) (*BaseProbe, error) {
+	var bp BaseProbe
+
+	// apply defautls by copying from the parent
+	if parent != nil {
+		bp = *parent
+	}
+
+	// overwrite stuff which is unique for every instance
+	bp.parent = parent
+	bp.name = name
+
+	// apply additional defaults for zeros
+	if bp.YUpdateEvery == 0 {
+		bp.YUpdateEvery = 30 * time.Second
+	}
+
+	// potentially overwrite some by decoding from YAML
+	err := n.Decode(&bp)
+	if err != nil {
+		return nil, err
+	}
+
+	return &bp, nil
+}
+
 func instantiateProbe(n *yaml.Node, bp *BaseProbe) (Probe, error) {
 	t := bp.Type()
 	switch t {
@@ -220,23 +222,22 @@ func parseProbeNode(parent *BaseProbe, node *yaml.Node) (ProbeMap, error) {
 		if key {
 			keyName = n.Value
 		} else if n.Kind == yaml.MappingNode {
-			var bp = BaseProbe{parent: parent, name: keyName}
-			err := n.Decode(&bp)
+			bp, err := instantiateBaseProbe(parent, n, keyName)
 			if err != nil {
 				return nil, err
 			}
 
 			if isMappingNodeWithScalarValues(n) { // is leaf
-				m[keyName], err = instantiateProbe(n, &bp)
+				m[keyName], err = instantiateProbe(n, bp)
 				if err != nil {
 					return nil, err
 				}
 			} else { // is group
-				bp.children, err = parseProbeNode(&bp, n)
+				bp.children, err = parseProbeNode(bp, n)
 				if err != nil {
 					return nil, err
 				}
-				m[keyName] = &bp
+				m[keyName] = bp
 			}
 		}
 
