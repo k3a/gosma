@@ -1,0 +1,8 @@
+probes:
+  test:
+    type: http
+    url: http://localhost:1122
+
+watchers:
+  - type: dashboard
+    listen: 0.0.0.0:8080

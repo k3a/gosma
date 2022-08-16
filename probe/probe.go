@@ -7,6 +7,12 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+type ProbeResultReceiver interface {
+	// ProbeResult is called by a probe in a new gorountine
+	ProbeResult(p Probe, d time.Duration, err error)
+}
+
+// Probe lists operations which can be done on any probe
 type Probe interface {
 	fmt.Stringer
 	Parent() Probe
@@ -15,9 +21,10 @@ type Probe interface {
 	Description() string
 	UpdateEvery() time.Duration
 	Children() ProbeMap
-	RunLoop(ch <-chan struct{}) error
+	RunLoop(stop <-chan struct{}, res ProbeResultReceiver) error
 }
 
+// ProbeMap is a map of probes
 type ProbeMap map[string]Probe
 
 func isMappingNodeWithScalarValues(node *yaml.Node) bool {

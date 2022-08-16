@@ -12,6 +12,7 @@ type BaseProbe struct {
 	name     string
 	parent   Probe
 	children ProbeMap
+	runStart time.Time
 
 	YType        string        `yaml:"type"`
 	YDescription string        `yaml:"description"`
@@ -23,11 +24,19 @@ func (bp *BaseProbe) nextRun(stop <-chan struct{}) bool {
 	case <-stop:
 		return false
 	case <-time.After(bp.UpdateEvery()):
+		bp.runStart = time.Now()
 		return true
 	}
 }
 
-func (bp *BaseProbe) RunLoop(ch <-chan struct{}) error {
+func (bp *BaseProbe) runDuration() time.Duration {
+	if bp.runStart.IsZero() {
+		return 0
+	}
+	return time.Since(bp.runStart)
+}
+
+func (bp *BaseProbe) RunLoop(stop <-chan struct{}, res ProbeResultReceiver) error {
 	return nil
 }
 
