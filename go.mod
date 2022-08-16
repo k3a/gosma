@@ -1,4 +1,4 @@
-module gosma
+module github.com/k3a/gosma
 
 go 1.17
 
