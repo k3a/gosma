@@ -10,6 +10,7 @@ var Buildstamp = "DEBUG"
 
 type config struct {
 	ProductName string      `yaml:"product_name"`
+	URL         string      `yaml:"url"`
 	Probes      yaml.Node   `yaml:"probes"`
 	Watchers    []yaml.Node `yaml:"watchers"`
 }

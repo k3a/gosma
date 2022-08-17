@@ -126,6 +126,10 @@ func (w *NTFYWatcher) ProbeResult(p probe.Probe, d time.Duration, err error) {
 		newDesc = fmt.Sprintf("Service %s failed with %s", name, newState)
 	}
 
+	if config.C.URL != "" {
+		newDesc += "\n" + config.C.URL
+	}
+
 	// state change
 	if st.currentState != newState {
 		st.currentState = newState
