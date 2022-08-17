@@ -8,11 +8,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/k3a/gosma/config"
 	"github.com/k3a/gosma/probe"
 	"gopkg.in/yaml.v3"
 )
-
-const ProdName = "gosma"
 
 type ntfyServiceStatus struct {
 	lastStateTransition time.Time
@@ -119,11 +118,11 @@ func (w *NTFYWatcher) ProbeResult(p probe.Probe, d time.Duration, err error) {
 	}
 
 	newState := "OK"
-	newTitle := fmt.Sprintf("%s alert: %s OK", ProdName, name)
+	newTitle := fmt.Sprintf("%s alert: %s OK", config.C.ProductName, name)
 	newDesc := fmt.Sprintf("Service %s recovered after %s", name, time.Since(st.lastStateTransition).Round(time.Second))
 	if err != nil {
 		newState = err.Error()
-		newTitle = fmt.Sprintf("%s alert: %s FAIL", ProdName, name)
+		newTitle = fmt.Sprintf("%s alert: %s FAIL", config.C.ProductName, name)
 		newDesc = fmt.Sprintf("Service %s failed with %s", name, newState)
 	}
 

@@ -6,22 +6,13 @@ import (
 	"os"
 	"time"
 
+	"github.com/k3a/gosma/config"
 	"github.com/k3a/gosma/probe"
 	"github.com/k3a/gosma/watcher"
-
-	"gopkg.in/yaml.v3"
 )
-
-var buildstamp = "DEBUG"
-
-type Config struct {
-	YProbes   yaml.Node   `yaml:"probes"`
-	YWatchers []yaml.Node `yaml:"watchers"`
-}
 
 type Monitor struct {
 	chStopProbes chan struct{}
-	Config       Config
 	Probes       probe.ProbeMap `yaml:"-"`
 	Watchers     []probe.ProbeResultReceiver
 }
@@ -44,33 +35,27 @@ func (m *Monitor) startProbes() {
 func (m *Monitor) LoadConfig(cpath string) error {
 	m.stopProbes()
 
-	f, err := os.Open(cpath)
-	if err != nil {
-		return err
-	}
-
-	y := yaml.NewDecoder(f)
-
-	err = y.Decode(&m.Config)
+	err := config.C.LoadFromFile(cpath)
 	if err != nil {
 		return err
 	}
 
 	m.Watchers = nil
-	for _, n := range m.Config.YWatchers {
+	for _, n := range config.C.Watchers {
 		w, err := watcher.WatcherFromYAMLNode(&n)
 		errChk(err, "creating a watcher")
 
 		m.Watchers = append(m.Watchers, w)
 	}
 
-	m.Probes, err = probe.ParseProbesFromYAMLNode(nil, &m.Config.YProbes)
+	m.Probes, err = probe.ParseProbesFromYAMLNode(nil, &config.C.Probes)
 	if err != nil {
 		return err
 	}
 
 	// print all probes
 	fmt.Println(m.Probes)
+	//os.Stdout.Sync()
 
 	m.startProbes()
 
@@ -104,7 +89,7 @@ func runProbeLoopInBackground(p probe.Probe, stop <-chan struct{}, res probe.Pro
 }
 
 func main() {
-	fmt.Println("GoSMA " + buildstamp + "\n")
+	fmt.Println(config.C.ProductName + " " + config.Buildstamp + "\n")
 
 	if len(os.Args) == 1 {
 		fmt.Fprintf(os.Stderr, "Usage: %s <path-to-config>\n", os.Args[0])

@@ -1,7 +1,11 @@
 probes:
-  test:
+  test_http:
     type: http
     url: http://localhost:1122
+  test_file:
+    type: file
+    path: /temp/file
+    not_older_than: 20s
 
 watchers:
   - type: dashboard

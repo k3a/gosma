@@ -27,6 +27,14 @@ type Probe interface {
 // ProbeMap is a map of probes
 type ProbeMap map[string]Probe
 
+func (pm ProbeMap) String() string {
+	s := ""
+	for k, v := range pm {
+		s += fmt.Sprintf("%s: %s\n", k, v)
+	}
+	return s[:len(s)-1]
+}
+
 func isMappingNodeWithScalarValues(node *yaml.Node) bool {
 	if node.Kind != yaml.MappingNode {
 		return false
@@ -46,19 +54,25 @@ func isMappingNodeWithScalarValues(node *yaml.Node) bool {
 
 func instantiateProbe(n *yaml.Node, bp *BaseProbe) (Probe, error) {
 	t := bp.Type()
+	var p Probe
+
 	switch t {
 	case "http":
-		var hp = HTTPProbe{BaseProbe: *bp}
-		err := n.Decode(&hp)
-		if err != nil {
-			return nil, err
-		}
-		return &hp, nil
+		p = &HTTPProbe{BaseProbe: *bp}
+	case "file":
+		p = &FileProbe{BaseProbe: *bp}
 	default:
 		var dec interface{}
 		n.Decode(&dec)
 		return nil, fmt.Errorf("unknown type %s for %#v", t, dec)
 	}
+
+	err := n.Decode(p)
+	if err != nil {
+		return nil, err
+	}
+
+	return p, nil
 }
 
 // ParseProbesFromYAMLNode parses and instantiated a map of probes from a YAML MappingNode

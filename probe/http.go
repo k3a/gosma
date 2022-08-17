@@ -31,14 +31,16 @@ func (p *HTTPProbe) String() string {
 	if p.ResponseMatch != "" {
 		attrs += ", response_match=" + p.ResponseMatch
 	}
-	attrs += ", name=" + p.Name()
+	if p.StatusCode != 0 {
+		attrs += fmt.Sprintf(", status_code=%v", p.StatusCode)
+	}
 	return fmt.Sprintf("HTTPProbe(%s)", attrs)
 }
 
 func (p *HTTPProbe) RunLoop(stop <-chan struct{}, res ProbeResultReceiver) error {
 	// validate
 	if p.URL == "" {
-		return fmt.Errorf("HTTPProbe: url is required")
+		return p.err("parameter url is required")
 	}
 	if p.Method == "" {
 		p.Method = "GET"
@@ -55,7 +57,7 @@ func (p *HTTPProbe) RunLoop(stop <-chan struct{}, res ProbeResultReceiver) error
 
 	req, err := http.NewRequest(p.Method, p.URL, body)
 	if err != nil {
-		return fmt.Errorf("HTTPProbe: error creating request: %v", err)
+		return p.err("error creating request: %v", err)
 	}
 
 	// headers
