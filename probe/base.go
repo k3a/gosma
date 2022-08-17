@@ -2,6 +2,7 @@ package probe
 
 import (
 	"fmt"
+	"math/rand"
 	"reflect"
 	"time"
 
@@ -20,10 +21,12 @@ type BaseProbe struct {
 }
 
 func (bp *BaseProbe) nextRun(stop <-chan struct{}) bool {
+	randExtra := time.Duration(rand.Intn(200)-100) * time.Millisecond
+
 	select {
 	case <-stop:
 		return false
-	case <-time.After(bp.UpdateEvery()):
+	case <-time.After(bp.UpdateEvery() + randExtra):
 		bp.runStart = time.Now()
 		return true
 	}
