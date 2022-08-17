@@ -31,7 +31,7 @@ func (p *SocketProbe) String() string {
 func (p *SocketProbe) RunLoop(stop <-chan struct{}, res ProbeResultReceiver) error {
 	// validate
 	if p.SocketType == "" {
-		return p.err("socket_type parameter is required")
+		p.SocketType = "tcp"
 	}
 	if p.SocketType == "unix" && p.Path == "" {
 		return p.err("path parameter is required for unix socket type")
