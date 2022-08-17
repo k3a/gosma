@@ -13,6 +13,15 @@ probes:
   test_ftp:
     type: ftp
     server: ftp.dlptest.com
+  test_dns:
+    type: dns
+    server: 8.8.8.8
+    query: google.com
+  test_dns_nonexisten_mx:
+    type: dns
+    server: 8.8.8.8
+    query: httpbin.org
+    query_type: MX
 
 watchers:
   - type: dashboard

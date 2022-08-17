@@ -46,9 +46,9 @@ func (p *SocketProbe) RunLoop(stop <-chan struct{}, res ProbeResultReceiver) err
 			conn net.Conn
 		)
 		if p.SocketType == "unix" {
-			conn, err = net.Dial("unix", p.Path)
+			conn, err = net.DialTimeout("unix", p.Path, p.UpdateEvery())
 		} else {
-			conn, err = net.Dial(p.SocketType, p.Address)
+			conn, err = net.DialTimeout(p.SocketType, p.Address, p.UpdateEvery())
 		}
 
 		if err == nil {

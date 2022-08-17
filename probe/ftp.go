@@ -35,7 +35,7 @@ func (p *FTPProbe) RunLoop(stop <-chan struct{}, res ProbeResultReceiver) error 
 	}
 
 	for {
-		conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", p.Server, p.Port))
+		conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", p.Server, p.Port), p.UpdateEvery())
 
 		if err == nil {
 			scanner := bufio.NewScanner(conn)
