@@ -10,6 +10,9 @@ probes:
     type: socket
     socket_type: tcp
     address: localhost:1122
+  test_ftp:
+    type: ftp
+    server: ftp.dlptest.com
 
 watchers:
   - type: dashboard

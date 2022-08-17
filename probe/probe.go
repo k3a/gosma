@@ -63,6 +63,8 @@ func instantiateProbe(n *yaml.Node, bp *BaseProbe) (Probe, error) {
 		p = &FileProbe{BaseProbe: *bp}
 	case "socket":
 		p = &SocketProbe{BaseProbe: *bp}
+	case "ftp":
+		p = &FTPProbe{BaseProbe: *bp}
 	default:
 		var dec interface{}
 		n.Decode(&dec)
