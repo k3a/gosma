@@ -6,6 +6,10 @@ probes:
     type: file
     path: /temp/file
     not_older_than: 20s
+  test_socket:
+    type: socket
+    socket_type: tcp
+    address: localhost:1122
 
 watchers:
   - type: dashboard
