@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"runtime"
 	"time"
 
 	"github.com/k3a/gosma/config"
@@ -77,6 +78,14 @@ func errChk(err error, desc string) {
 
 func runProbeLoopInBackground(p probe.Probe, stop <-chan struct{}, res probe.ProbeResultReceiver) {
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				buf := make([]byte, 1<<16)
+				runtime.Stack(buf, false)
+				log.Printf("PANIC: %v\n%s\n", r, buf)
+			}
+		}()
+
 		err := p.RunLoop(stop, res)
 		if err != nil {
 			log.Printf("error running %s: %v\n", p.Name(), err)
