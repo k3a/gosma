@@ -22,6 +22,9 @@ probes:
     server: 8.8.8.8
     query: httpbin.org
     query_type: MX
+  test_smtp:
+    type: smtp
+    server: smtp.gmail.com
 
 watchers:
   - type: dashboard
