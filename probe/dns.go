@@ -11,7 +11,6 @@ type DNSProbe struct {
 	BaseProbe
 
 	Server    string `yaml:"server"`
-	Port      int    `yaml:"port"`
 	QueryType string `yaml:"query_type"`
 	Query     string `yaml:"query"`
 }
@@ -28,9 +27,6 @@ func (p *DNSProbe) String() string {
 	if p.Server != "" {
 		attrs += ", server=" + p.Server
 	}
-	if p.Port != 0 {
-		attrs += fmt.Sprintf(", port=%d", p.Port)
-	}
 	return fmt.Sprintf("Socket(%s)", attrs)
 }
 
@@ -39,11 +35,11 @@ func (p *DNSProbe) RunLoop(stop <-chan struct{}, res ProbeResultReceiver) error 
 	if p.Query == "" {
 		return p.err("query parameter is required")
 	}
-	if p.Port == 0 {
-		p.Port = 53
-	}
 	if p.QueryType == "" {
 		p.QueryType = "A"
+	}
+	if p.Server != "" {
+		p.Server = ensureAddressWithPort(p.Server, 53)
 	}
 
 	for {
@@ -57,7 +53,7 @@ func (p *DNSProbe) RunLoop(stop <-chan struct{}, res ProbeResultReceiver) error 
 				d := net.Dialer{
 					Timeout: p.UpdateEvery(),
 				}
-				return d.DialContext(ctx, network, fmt.Sprintf("%s:%d", p.Server, p.Port))
+				return d.DialContext(ctx, network, p.Server)
 			}
 		}
 

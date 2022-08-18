@@ -98,7 +98,7 @@ func runProbeLoopInBackground(p probe.Probe, stop <-chan struct{}, res probe.Pro
 }
 
 func main() {
-	fmt.Println(config.C.ProductName + " " + config.Buildstamp + "\n")
+	fmt.Println(config.C.Name + " " + config.Buildstamp + "\n")
 
 	if len(os.Args) == 1 {
 		fmt.Fprintf(os.Stderr, "Usage: %s <path-to-config>\n", os.Args[0])

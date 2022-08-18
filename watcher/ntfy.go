@@ -118,11 +118,11 @@ func (w *NTFYWatcher) ProbeResult(p probe.Probe, d time.Duration, err error) {
 	}
 
 	newState := "OK"
-	newTitle := fmt.Sprintf("%s alert: %s OK", config.C.ProductName, name)
+	newTitle := fmt.Sprintf("%s alert: %s OK", config.C.Name, name)
 	newDesc := fmt.Sprintf("Service %s recovered after %s", name, time.Since(st.lastStateTransition).Round(time.Second))
 	if err != nil {
 		newState = err.Error()
-		newTitle = fmt.Sprintf("%s alert: %s FAIL", config.C.ProductName, name)
+		newTitle = fmt.Sprintf("%s alert: %s FAIL", config.C.Name, name)
 		newDesc = fmt.Sprintf("Service %s failed with %s", name, newState)
 	}
 

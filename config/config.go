@@ -9,15 +9,15 @@ import (
 var Buildstamp = "DEBUG"
 
 type config struct {
-	ProductName string      `yaml:"product_name"`
-	URL         string      `yaml:"url"`
-	Probes      yaml.Node   `yaml:"probes"`
-	Watchers    []yaml.Node `yaml:"watchers"`
+	Name     string      `yaml:"name"`
+	URL      string      `yaml:"url"`
+	Probes   yaml.Node   `yaml:"probes"`
+	Watchers []yaml.Node `yaml:"watchers"`
 }
 
 func (c *config) validateAndSetDefaults() error {
-	if c.ProductName == "" {
-		c.ProductName = "GoSMA"
+	if c.Name == "" {
+		c.Name = "GoSMA"
 	}
 
 	return nil

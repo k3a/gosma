@@ -2,7 +2,7 @@ package probe
 
 import (
 	"fmt"
-	"net"
+	"io"
 )
 
 type SocketProbe struct {
@@ -11,6 +11,7 @@ type SocketProbe struct {
 	SocketType string `yaml:"socket_type"`
 	Address    string `yaml:"address"`
 	Path       string `yaml:"path"`
+	TLS        bool   `yaml:"tls"`
 }
 
 func (p *SocketProbe) err(f string, args ...interface{}) error {
@@ -42,13 +43,13 @@ func (p *SocketProbe) RunLoop(stop <-chan struct{}, res ProbeResultReceiver) err
 
 	for {
 		var (
+			conn io.ReadCloser
 			err  error
-			conn net.Conn
 		)
 		if p.SocketType == "unix" {
-			conn, err = net.DialTimeout("unix", p.Path, p.UpdateEvery())
+			conn, err = socketClient("unix", p.Path, p.UpdateEvery(), p.TLS)
 		} else {
-			conn, err = net.DialTimeout(p.SocketType, p.Address, p.UpdateEvery())
+			conn, err = socketClient(p.SocketType, p.Address, p.UpdateEvery(), p.TLS)
 		}
 
 		if err == nil {

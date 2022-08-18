@@ -3,14 +3,13 @@ package probe
 import (
 	"bufio"
 	"fmt"
-	"net"
 )
 
 type FTPProbe struct {
 	BaseProbe
 
 	Server string `yaml:"server"`
-	Port   int    `yaml:"port"`
+	TLS    bool   `yaml:"tls"`
 }
 
 func (p *FTPProbe) err(f string, args ...interface{}) error {
@@ -19,9 +18,6 @@ func (p *FTPProbe) err(f string, args ...interface{}) error {
 
 func (p *FTPProbe) String() string {
 	attrs := "server=" + p.Server
-	if p.Port != 0 {
-		attrs += fmt.Sprintf(", port=%d", p.Port)
-	}
 	return fmt.Sprintf("Socket(%s)", attrs)
 }
 
@@ -30,17 +26,14 @@ func (p *FTPProbe) RunLoop(stop <-chan struct{}, res ProbeResultReceiver) error 
 	if p.Server == "" {
 		return p.err("server parameter is required")
 	}
-	if p.Port == 0 {
-		p.Port = 21
-	}
+	p.Server = ensureAddressWithPort(p.Server, 21)
 
 	for {
-		conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", p.Server, p.Port), p.UpdateEvery())
+		conn, err := socketClient("tcp", p.Server, p.UpdateEvery(), p.TLS)
 
 		if err == nil {
 			scanner := bufio.NewScanner(conn)
 			ok := false
-
 			for scanner.Scan() {
 				t := scanner.Text()
 				if len(t) < 4 {
