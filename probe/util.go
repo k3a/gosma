@@ -30,17 +30,20 @@ addDefaultPort:
 	return address + ":" + fmt.Sprint(defaultPort)
 }
 
-func socketClient(network string, address string, timeout time.Duration, requireTLS bool) (io.ReadWriteCloser, error) {
-	h, _, err := net.SplitHostPort(address)
-	if err != nil {
-		return nil, err
+func socketClient(network string, address string, timeout time.Duration, requireTLS bool, optionalServerName string) (io.ReadWriteCloser, error) {
+	if optionalServerName == "" && (network == "tcp" || network == "udp") {
+		h, _, err := net.SplitHostPort(address)
+		if err != nil {
+			return nil, err
+		}
+		optionalServerName = h
 	}
 
 	conn, err := net.DialTimeout(network, address, timeout)
 
 	if err == nil && requireTLS {
 		tlsConn := tls.Client(conn, &tls.Config{
-			ServerName: h,
+			ServerName: optionalServerName,
 		})
 		return tlsConn, tlsConn.Handshake()
 	}

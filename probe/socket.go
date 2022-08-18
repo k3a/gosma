@@ -8,10 +8,11 @@ import (
 type SocketProbe struct {
 	BaseProbe
 
-	SocketType string `yaml:"socket_type"`
-	Address    string `yaml:"address"`
-	Path       string `yaml:"path"`
-	TLS        bool   `yaml:"tls"`
+	SocketType    string `yaml:"socket_type"`
+	Address       string `yaml:"address"`
+	Path          string `yaml:"path"`
+	TLS           bool   `yaml:"tls"`
+	TLSServerName string `yaml:"tls_server_name"`
 }
 
 func (p *SocketProbe) err(f string, args ...interface{}) error {
@@ -25,6 +26,9 @@ func (p *SocketProbe) String() string {
 	}
 	if p.Path != "" {
 		attrs += ", path=" + p.Path
+	}
+	if p.TLSServerName != "" {
+		attrs += ", tls_server_name=" + p.TLSServerName
 	}
 	return fmt.Sprintf("Socket(%s)", attrs)
 }
@@ -47,9 +51,9 @@ func (p *SocketProbe) RunLoop(stop <-chan struct{}, res ProbeResultReceiver) err
 			err  error
 		)
 		if p.SocketType == "unix" {
-			conn, err = socketClient("unix", p.Path, p.UpdateEvery(), p.TLS)
+			conn, err = socketClient("unix", p.Path, p.UpdateEvery(), p.TLS, p.TLSServerName)
 		} else {
-			conn, err = socketClient(p.SocketType, p.Address, p.UpdateEvery(), p.TLS)
+			conn, err = socketClient(p.SocketType, p.Address, p.UpdateEvery(), p.TLS, p.TLSServerName)
 		}
 
 		if err == nil {

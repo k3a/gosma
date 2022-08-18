@@ -29,7 +29,7 @@ func (p *FTPProbe) RunLoop(stop <-chan struct{}, res ProbeResultReceiver) error 
 	p.Server = ensureAddressWithPort(p.Server, 21)
 
 	for {
-		conn, err := socketClient("tcp", p.Server, p.UpdateEvery(), p.TLS)
+		conn, err := socketClient("tcp", p.Server, p.UpdateEvery(), p.TLS, "")
 
 		if err == nil {
 			scanner := bufio.NewScanner(conn)

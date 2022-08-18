@@ -35,7 +35,7 @@ func (p *IMAPProbe) RunLoop(stop <-chan struct{}, res ProbeResultReceiver) error
 	}
 
 	for {
-		conn, err := socketClient("tcp", p.Server, p.UpdateEvery(), p.TLS)
+		conn, err := socketClient("tcp", p.Server, p.UpdateEvery(), p.TLS, "")
 
 		if err == nil {
 			scanner := bufio.NewScanner(conn)
