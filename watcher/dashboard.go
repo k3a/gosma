@@ -16,6 +16,7 @@ type dashboardServiceStatus struct {
 	lastStateTransition time.Time
 	currentState        string
 	desc                string
+	latency             time.Duration
 }
 
 type DashboardWatcher struct {
@@ -72,8 +73,19 @@ func (w *DashboardWatcher) indexHandler(wr http.ResponseWriter, r *http.Request)
 	str += fmt.Sprintf("<meta http-equiv=\"refresh\" content=\"%d\">\n", w.lowestUpdateIntervalSec)
 	str += `<style>
 		body {
-			background-color: #111;
+			background-color: #000;
 			color: #fff;
+		}
+		.box {
+			margin: 10px;
+			background-color: #222;
+			display: inline-block;
+			min-width: 150px;
+			padding: 5px;
+			white-space: nowrap;
+		}
+		.box-wide {
+		   min-width: 400px;
 		}
 	</style>`
 	str += "</head><body>\n"
@@ -81,7 +93,7 @@ func (w *DashboardWatcher) indexHandler(wr http.ResponseWriter, r *http.Request)
 	if len(w.status) == 0 {
 		str += "No probes defined"
 	} else {
-		str += "<ul>\n"
+		//str += "<ul>\n"
 
 		var keys []string
 		for k := range w.status {
@@ -93,17 +105,19 @@ func (w *DashboardWatcher) indexHandler(wr http.ResponseWriter, r *http.Request)
 			st := w.status[name]
 
 			col := "#00ff00"
+			extraCls := ""
 			if st.currentState != "OK" {
 				col = "#ff0000"
+				extraCls = "box-wide"
 			}
 
 			since := time.Since(st.lastStateTransition).Round(time.Second)
 
-			str += fmt.Sprintf("<li><b>%s</b> <small>%s</small><br><span style=\"color:%s\">%s</span> since %s</li>\n",
-				name, st.desc, col, st.currentState, since)
+			str += fmt.Sprintf("<div class=\"box %s\"><b>%s</b> %s <small>%s</small><br><span style=\"color:%s\">%s</span> since %s</div>\n",
+				extraCls, name, st.latency.Round(time.Microsecond), st.desc, col, st.currentState, since)
 		}
 
-		str += "</ul>\n"
+		//str += "</ul>\n"
 	}
 
 	str += "</head></body>"
@@ -123,6 +137,8 @@ func (w *DashboardWatcher) ProbeResult(p probe.Probe, d time.Duration, err error
 		st = &dashboardServiceStatus{}
 		w.status[name] = st
 	}
+
+	st.latency = d
 
 	newState := "OK"
 	if err != nil {

@@ -13,7 +13,7 @@ probes:
   test_ftp:
     type: ftp
     server: ftp.dlptest.com
-  test_dns:
+  test_dns_with_a_pretty_long_name:
     type: dns
     server: 8.8.8.8
     query: google.com
