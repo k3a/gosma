@@ -1,4 +1,4 @@
-package probe
+package util
 
 import (
 	"crypto/tls"
@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func ensureAddressWithPort(address string, defaultPort int) string {
+func EnsureAddressWithPort(address string, defaultPort int) string {
 	var err error
 
 	// no colon means no port
@@ -30,7 +30,7 @@ addDefaultPort:
 	return address + ":" + fmt.Sprint(defaultPort)
 }
 
-func socketClient(network string, address string, timeout time.Duration, requireTLS bool, optionalServerName string) (io.ReadWriteCloser, error) {
+func SocketClient(network string, address string, timeout time.Duration, requireTLS bool, optionalServerName string) (io.ReadWriteCloser, error) {
 	if optionalServerName == "" && (network == "tcp" || network == "udp") {
 		h, _, err := net.SplitHostPort(address)
 		if err != nil {

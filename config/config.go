@@ -13,6 +13,7 @@ type config struct {
 	URL      string      `yaml:"url"`
 	Probes   yaml.Node   `yaml:"probes"`
 	Watchers []yaml.Node `yaml:"watchers"`
+	Alerters []yaml.Node `yaml:"alerters"`
 }
 
 func (c *config) validateAndSetDefaults() error {

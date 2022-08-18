@@ -7,6 +7,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/k3a/gosma/alerter"
 	"github.com/k3a/gosma/config"
 	"github.com/k3a/gosma/probe"
 	"github.com/k3a/gosma/watcher"
@@ -15,7 +16,8 @@ import (
 type Monitor struct {
 	chStopProbes chan struct{}
 	Probes       probe.ProbeMap `yaml:"-"`
-	Watchers     []probe.ProbeResultReceiver
+	Watchers     []watcher.Watcher
+	Alerters     []alerter.Alerter
 }
 
 func (m *Monitor) stopProbes() {
@@ -49,6 +51,14 @@ func (m *Monitor) LoadConfig(cpath string) error {
 		m.Watchers = append(m.Watchers, w)
 	}
 
+	m.Alerters = nil
+	for _, n := range config.C.Alerters {
+		a, err := alerter.AlerterFromYAMLNode(&n)
+		errChk(err, "creating an alerter")
+
+		m.Alerters = append(m.Alerters, a)
+	}
+
 	m.Probes, err = probe.ParseProbesFromYAMLNode(nil, &config.C.Probes)
 	if err != nil {
 		return err
@@ -65,8 +75,27 @@ func (m *Monitor) LoadConfig(cpath string) error {
 
 func (m *Monitor) ProbeResult(p probe.Probe, d time.Duration, err error) {
 	for _, w := range m.Watchers {
-		go w.ProbeResult(p, d, err)
+		go func(w watcher.Watcher) {
+			err = w.HandleProbeResult(p, d, err)
+			if err != nil {
+				log.Printf("watcher error: %v", err)
+			}
+		}(w)
 	}
+
+	go func() {
+		alertedOk := false
+		for _, w := range m.Alerters {
+			if !alertedOk || w.ShouldAlertAlways() {
+				err = w.HandleProbeResult(p, d, err)
+				if err != nil {
+					log.Printf("alerter error: %v", err)
+				} else {
+					alertedOk = true
+				}
+			}
+		}
+	}()
 }
 
 func errChk(err error, desc string) {

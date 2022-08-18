@@ -1,4 +1,4 @@
-package watcher
+package alerter
 
 import (
 	"fmt"
@@ -19,7 +19,9 @@ type ntfyServiceStatus struct {
 	inited              bool
 }
 
-type NTFYWatcher struct {
+type NTFYAlerter struct {
+	baseAlerter
+
 	Server   string `yaml:"server"`
 	Username string `yaml:"username"`
 	Password string `yaml:"password"`
@@ -30,15 +32,15 @@ type NTFYWatcher struct {
 	status map[string]*ntfyServiceStatus
 }
 
-func (w *NTFYWatcher) err(estr string, args ...interface{}) error {
+func (w *NTFYAlerter) err(estr string, args ...interface{}) error {
 	return fmt.Errorf("ntfy watcher: "+estr, args...)
 }
 
-func (w *NTFYWatcher) log(str string, args ...interface{}) {
+func (w *NTFYAlerter) log(str string, args ...interface{}) {
 	log.Printf("ntfy watcher: "+str, args...)
 }
 
-func (w *NTFYWatcher) Init(n *yaml.Node) error {
+func (w *NTFYAlerter) Init(n *yaml.Node) error {
 	w.status = make(map[string]*ntfyServiceStatus)
 
 	err := n.Decode(&w)
@@ -65,7 +67,7 @@ func (w *NTFYWatcher) Init(n *yaml.Node) error {
 	return nil
 }
 
-func (w *NTFYWatcher) sendAlert(title, text string) error {
+func (w *NTFYAlerter) sendAlert(title, text string) error {
 	cli := &http.Client{Timeout: 30 * time.Second}
 
 	req, err := http.NewRequest("POST", w.Server+"/"+w.Channel, strings.NewReader(text))
@@ -105,7 +107,7 @@ func (w *NTFYWatcher) sendAlert(title, text string) error {
 	return err
 }
 
-func (w *NTFYWatcher) ProbeResult(p probe.Probe, d time.Duration, err error) {
+func (w *NTFYAlerter) HandleProbeResult(p probe.Probe, d time.Duration, perr error) (err error) {
 	w.m.Lock()
 	defer w.m.Unlock()
 
@@ -120,8 +122,8 @@ func (w *NTFYWatcher) ProbeResult(p probe.Probe, d time.Duration, err error) {
 	newState := "OK"
 	newTitle := fmt.Sprintf("%s alert: %s OK", config.C.Name, name)
 	newDesc := fmt.Sprintf("Service %s recovered after %s", name, time.Since(st.lastStateTransition).Round(time.Second))
-	if err != nil {
-		newState = err.Error()
+	if perr != nil {
+		newState = perr.Error()
 		newTitle = fmt.Sprintf("%s alert: %s FAIL", config.C.Name, name)
 		newDesc = fmt.Sprintf("Service %s failed with %s", name, newState)
 	}
@@ -137,14 +139,11 @@ func (w *NTFYWatcher) ProbeResult(p probe.Probe, d time.Duration, err error) {
 
 		// send notification
 		if st.inited || newState != "OK" {
-			go func() {
-				err := w.sendAlert(newTitle, newDesc)
-				if err != nil {
-					//TODO: implement email backup
-				}
-			}()
+			err = w.sendAlert(newTitle, newDesc)
 		}
 	}
 
 	st.inited = true
+
+	return err
 }

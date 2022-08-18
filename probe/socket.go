@@ -3,6 +3,8 @@ package probe
 import (
 	"fmt"
 	"io"
+
+	"github.com/k3a/gosma/util"
 )
 
 type SocketProbe struct {
@@ -51,9 +53,9 @@ func (p *SocketProbe) RunLoop(stop <-chan struct{}, res ProbeResultReceiver) err
 			err  error
 		)
 		if p.SocketType == "unix" {
-			conn, err = socketClient("unix", p.Path, p.UpdateEvery(), p.TLS, p.TLSServerName)
+			conn, err = util.SocketClient("unix", p.Path, p.UpdateEvery(), p.TLS, p.TLSServerName)
 		} else {
-			conn, err = socketClient(p.SocketType, p.Address, p.UpdateEvery(), p.TLS, p.TLSServerName)
+			conn, err = util.SocketClient(p.SocketType, p.Address, p.UpdateEvery(), p.TLS, p.TLSServerName)
 		}
 
 		if err == nil {

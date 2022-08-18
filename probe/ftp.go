@@ -3,6 +3,8 @@ package probe
 import (
 	"bufio"
 	"fmt"
+
+	"github.com/k3a/gosma/util"
 )
 
 type FTPProbe struct {
@@ -26,10 +28,10 @@ func (p *FTPProbe) RunLoop(stop <-chan struct{}, res ProbeResultReceiver) error 
 	if p.Server == "" {
 		return p.err("server parameter is required")
 	}
-	p.Server = ensureAddressWithPort(p.Server, 21)
+	p.Server = util.EnsureAddressWithPort(p.Server, 21)
 
 	for {
-		conn, err := socketClient("tcp", p.Server, p.UpdateEvery(), p.TLS, "")
+		conn, err := util.SocketClient("tcp", p.Server, p.UpdateEvery(), p.TLS, "")
 
 		if err == nil {
 			scanner := bufio.NewScanner(conn)

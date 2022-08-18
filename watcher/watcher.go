@@ -2,6 +2,7 @@ package watcher
 
 import (
 	"errors"
+	"time"
 
 	"github.com/k3a/gosma/probe"
 	"gopkg.in/yaml.v3"
@@ -12,7 +13,8 @@ type baseWatcher struct {
 }
 
 type Watcher interface {
-	probe.ProbeResultReceiver
+	// HandleProbeResult is called by a probe in a new gorountine
+	HandleProbeResult(p probe.Probe, d time.Duration, perr error) error
 	Init(n *yaml.Node) error
 }
 
@@ -29,8 +31,6 @@ func WatcherFromYAMLNode(n *yaml.Node) (Watcher, error) {
 	switch bw.Type {
 	case "dashboard":
 		w = &DashboardWatcher{}
-	case "ntfy":
-		w = &NTFYWatcher{}
 	default:
 		return nil, errors.New("unknown watcher type " + bw.Type)
 	}

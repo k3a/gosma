@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net"
 	"strings"
+
+	"github.com/k3a/gosma/util"
 )
 
 type DNSProbe struct {
@@ -39,7 +41,7 @@ func (p *DNSProbe) RunLoop(stop <-chan struct{}, res ProbeResultReceiver) error 
 		p.QueryType = "A"
 	}
 	if p.Server != "" {
-		p.Server = ensureAddressWithPort(p.Server, 53)
+		p.Server = util.EnsureAddressWithPort(p.Server, 53)
 	}
 
 	for {

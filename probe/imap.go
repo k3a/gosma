@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"fmt"
 	"strings"
+
+	"github.com/k3a/gosma/util"
 )
 
 type IMAPProbe struct {
@@ -29,13 +31,13 @@ func (p *IMAPProbe) RunLoop(stop <-chan struct{}, res ProbeResultReceiver) error
 	}
 
 	if p.TLS {
-		p.Server = ensureAddressWithPort(p.Server, 993)
+		p.Server = util.EnsureAddressWithPort(p.Server, 993)
 	} else {
-		p.Server = ensureAddressWithPort(p.Server, 143)
+		p.Server = util.EnsureAddressWithPort(p.Server, 143)
 	}
 
 	for {
-		conn, err := socketClient("tcp", p.Server, p.UpdateEvery(), p.TLS, "")
+		conn, err := util.SocketClient("tcp", p.Server, p.UpdateEvery(), p.TLS, "")
 
 		if err == nil {
 			scanner := bufio.NewScanner(conn)

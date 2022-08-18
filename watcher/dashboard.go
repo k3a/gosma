@@ -21,6 +21,8 @@ type dashboardServiceStatus struct {
 }
 
 type DashboardWatcher struct {
+	baseWatcher
+
 	YListen string `yaml:"listen"`
 
 	srv                     *http.Server
@@ -164,7 +166,7 @@ func (w *DashboardWatcher) indexHandler(wr http.ResponseWriter, r *http.Request)
 	wr.Write([]byte(str))
 }
 
-func (w *DashboardWatcher) ProbeResult(p probe.Probe, d time.Duration, err error) {
+func (w *DashboardWatcher) HandleProbeResult(p probe.Probe, d time.Duration, perr error) error {
 	w.m.Lock()
 	defer w.m.Unlock()
 
@@ -179,8 +181,8 @@ func (w *DashboardWatcher) ProbeResult(p probe.Probe, d time.Duration, err error
 	st.latency = d
 
 	newState := "OK"
-	if err != nil {
-		newState = err.Error()
+	if perr != nil {
+		newState = perr.Error()
 	}
 
 	// state change
@@ -197,4 +199,6 @@ func (w *DashboardWatcher) ProbeResult(p probe.Probe, d time.Duration, err error
 	if w.lowestUpdateIntervalSec == 1 || (updateIntervalSec < w.lowestUpdateIntervalSec && updateIntervalSec > 1) {
 		w.lowestUpdateIntervalSec = updateIntervalSec
 	}
+
+	return nil
 }
