@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"sort"
+	"strconv"
 	"sync"
 	"time"
 
@@ -76,18 +77,18 @@ func (w *DashboardWatcher) indexHandler(wr http.ResponseWriter, r *http.Request)
 		function ensureIframeLoaded() {
 			var iframe = document.getElementById('content');
 
-			var refresh = false;
-			try {
-				refresh = (iframe.contentDocument || iframe.contentWindow.document) == null;
-			} catch(e) {
-				refresh = true;
-			}
-			if (refresh) {
-				console.log("reloading iframe");
-				iframe.src += "";
-			}
+			// var refresh = false;
+			// try {
+			// 	refresh = (iframe.contentDocument || iframe.contentWindow.document) == null;
+			// } catch(e) {
+			// 	refresh = true;
+			// }
+			// if (refresh) {
 
-			window.setTimeout(ensureIframeLoaded, 3000);
+			// reload iframe
+			iframe.src += "";
+
+			window.setTimeout(ensureIframeLoaded, ` + strconv.Itoa(w.lowestUpdateIntervalSec) + `000);
 		}
 		</script>
 		<style>
@@ -107,7 +108,7 @@ func (w *DashboardWatcher) indexHandler(wr http.ResponseWriter, r *http.Request)
 
 		str = "<!DOCTYPE html><html><head>\n"
 		str += "<title>" + config.C.Name + "</title>\n"
-		str += fmt.Sprintf("<meta http-equiv=\"refresh\" content=\"%d\">\n", w.lowestUpdateIntervalSec)
+		//str += fmt.Sprintf("<meta http-equiv=\"refresh\" content=\"%d\">\n", w.lowestUpdateIntervalSec)
 		str += `<style>
 		body {
 			background-color: #000;
