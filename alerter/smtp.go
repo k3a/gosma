@@ -10,6 +10,7 @@ import (
 
 	"github.com/k3a/gosma/config"
 	"github.com/k3a/gosma/probe"
+	"github.com/k3a/gosma/util"
 	"gopkg.in/yaml.v3"
 )
 
@@ -22,13 +23,14 @@ type smtpServiceStatus struct {
 type SMTPAlerter struct {
 	baseAlerter
 
-	Server   string `yaml:"server"`
-	From     string `yaml:"from"`
-	To       string `yaml:"to"`
-	Username string `yaml:"username"`
-	Password string `yaml:"password"`
-	Identity string `yaml:"identity"`
-	CRMMD5   bool   `yaml:"crammd5"`
+	Server     string `yaml:"server"`
+	From       string `yaml:"from"`
+	To         string `yaml:"to"`
+	Username   string `yaml:"username"`
+	Password   string `yaml:"password"`
+	Identity   string `yaml:"identity"`
+	CRMMD5     bool   `yaml:"crammd5"`
+	DisableTLS bool   `yaml:"disable_tls"`
 
 	m      sync.RWMutex
 	status map[string]*smtpServiceStatus
@@ -53,6 +55,7 @@ func (a *SMTPAlerter) Init(n *yaml.Node) error {
 	if a.Server == "" {
 		return a.err("server parameter is required")
 	}
+	a.Server = util.EnsureAddressWithPort(a.Server, 25)
 	if a.To == "" {
 		return a.err("to parameter is required")
 	}
@@ -78,7 +81,41 @@ func (a *SMTPAlerter) sendAlert(title, text string) error {
 
 	msg := "Subject: " + title + "\r\n\r\n" + text
 
-	return smtp.SendMail(a.Server, auth, a.From, strings.Split(a.To, ","), []byte(msg))
+	var err error
+	if !a.DisableTLS {
+		err = smtp.SendMail(a.Server, auth, a.From, strings.Split(a.To, ","), []byte(msg))
+	} else {
+		c, err := smtp.Dial(a.Server)
+		if err == nil {
+			err = c.Mail(a.From)
+			if err == nil {
+				for _, addr := range strings.Split(a.To, ",") {
+					if err = c.Rcpt(addr); err != nil {
+						break
+					}
+				}
+				if err == nil {
+					wc, err := c.Data()
+					if err == nil {
+						_, err = wc.Write([]byte(msg))
+						cerr := wc.Close()
+						if err == nil {
+							err = cerr
+						}
+						if err == nil {
+							err = c.Quit()
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if err != nil {
+		a.log("error sending e-mail %v with subject %v", err, title)
+	}
+
+	return err
 }
 
 func (a *SMTPAlerter) HandleProbeResult(p probe.Probe, d time.Duration, perr error) (err error) {

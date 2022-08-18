@@ -83,9 +83,9 @@ func (m *Monitor) ProbeResult(p probe.Probe, d time.Duration, err error) {
 		}(w)
 	}
 
-	go func() {
+	go func(alerters []alerter.Alerter) {
 		alertedOk := false
-		for _, w := range m.Alerters {
+		for _, w := range alerters {
 			if !alertedOk || w.ShouldAlertAlways() {
 				err = w.HandleProbeResult(p, d, err)
 				if err != nil {
@@ -95,7 +95,7 @@ func (m *Monitor) ProbeResult(p probe.Probe, d time.Duration, err error) {
 				}
 			}
 		}
-	}()
+	}(m.Alerters)
 }
 
 func errChk(err error, desc string) {
@@ -117,7 +117,7 @@ func runProbeLoopInBackground(p probe.Probe, stop <-chan struct{}, res probe.Pro
 
 		err := p.RunLoop(stop, res)
 		if err != nil {
-			log.Printf("error running %s: %v\n", p.Name(), err)
+			go res.ProbeResult(p, 0, err)
 		}
 	}()
 

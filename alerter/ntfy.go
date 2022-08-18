@@ -86,22 +86,25 @@ func (w *NTFYAlerter) sendAlert(title, text string) error {
 	var resp *http.Response
 	retry := 5
 	sleep := 1
-	for retry >= 0 {
+	for retry > 0 {
 		resp, err = cli.Do(req)
 		if err == nil && resp.StatusCode == 200 {
 			break
 		} else if err != nil {
-			w.log("error %v while sending notification for channel %s, text %s, title %s, priority %s",
-				err, w.Channel, text, title, w.Priority)
+			w.log("error %v while sending notification for channel %s with title %s, priority %s",
+				err, w.Channel, title, w.Priority)
 		} else {
-			w.log("bad status %d while sending notification for channel %s, text %s, title %s, priority %s",
-				resp.StatusCode, w.Channel, text, title, w.Priority)
+			err = w.err("bad status %d while sending notification", resp.StatusCode)
+			w.log("bad status %d while sending notification for channel %s with title %s, priority %s",
+				resp.StatusCode, w.Channel, title, w.Priority)
 		}
 
-		time.Sleep(time.Duration(sleep) * time.Second)
-		sleep *= 2
-
 		retry--
+
+		if retry > 0 {
+			time.Sleep(time.Duration(sleep) * time.Second)
+			sleep *= 2
+		}
 	}
 
 	return err
