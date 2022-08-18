@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/k3a/gosma/config"
 	"github.com/k3a/gosma/probe"
 	"gopkg.in/yaml.v3"
 )
@@ -65,19 +66,53 @@ func (w *DashboardWatcher) Init(n *yaml.Node) error {
 }
 
 func (w *DashboardWatcher) indexHandler(wr http.ResponseWriter, r *http.Request) {
-	w.m.RLock()
-	defer w.m.RUnlock()
+	str := ""
 
-	str := "<html><head>\n"
-	str += "<title>GoSMA</title>\n"
-	str += fmt.Sprintf("<meta http-equiv=\"refresh\" content=\"%d\">\n", w.lowestUpdateIntervalSec)
-	str += `<style>
+	if r.URL.Query().Get("content") != "1" {
+		str = `<!DOCTYPE html><html><head><title>` + config.C.Name + `</title>
+		<script>
+		function ensureIframeLoaded() {
+			var iframe = document.getElementById('content');
+
+			var refresh = false;
+			try {
+				refresh = (iframe.contentDocument || iframe.contentWindow.document) == null;
+			} catch(e) {
+				refresh = true;
+			}
+			if (refresh) {
+				console.log("reloading iframe");
+				iframe.src += "";
+			}
+
+			window.setTimeout(ensureIframeLoaded, 3000);
+		}
+		</script>
+		<style>
+		body, html {
+			background-color:#000;margin:0;padding:0;height:100%;
+		}
+		iframe {
+			width:100%;height:100%;border:0;
+		}
+		</style>
+		<body onload="ensureIframeLoaded();">
+		<iframe id="content" src=".?content=1">
+		</iframe></body></html>`
+	} else {
+		w.m.RLock()
+		defer w.m.RUnlock()
+
+		str = "<!DOCTYPE html><html><head>\n"
+		str += "<title>" + config.C.Name + "</title>\n"
+		str += fmt.Sprintf("<meta http-equiv=\"refresh\" content=\"%d\">\n", w.lowestUpdateIntervalSec)
+		str += `<style>
 		body {
 			background-color: #000;
 			color: #fff;
 		}
 		.box {
-			margin: 10px;
+			margin: 5px;
 			background-color: #222;
 			display: inline-block;
 			min-width: 150px;
@@ -85,44 +120,45 @@ func (w *DashboardWatcher) indexHandler(wr http.ResponseWriter, r *http.Request)
 			white-space: nowrap;
 		}
 		.box-wide {
-		   min-width: 400px;
+		min-width: 400px;
 		}
-	</style>`
-	str += "</head><body>\n"
+		</style>`
+		str += "</head><body>\n"
 
-	if len(w.status) == 0 {
-		str += "No probes defined"
-	} else {
-		//str += "<ul>\n"
+		if len(w.status) == 0 {
+			str += "No probes defined"
+		} else {
+			//str += "<ul>\n"
 
-		var keys []string
-		for k := range w.status {
-			keys = append(keys, k)
-		}
-		sort.Strings(keys)
+			var keys []string
+			for k := range w.status {
+				keys = append(keys, k)
+			}
+			sort.Strings(keys)
 
-		for _, name := range keys {
-			st := w.status[name]
+			for _, name := range keys {
+				st := w.status[name]
 
-			col := "#00ff00"
-			extraCls := ""
-			extraText := fmt.Sprintf(", latency %s", st.latency.Round(time.Millisecond))
-			if st.currentState != "OK" {
-				col = "#ff0000"
-				extraCls = "box-wide"
-				extraText = ""
+				col := "#00ff00"
+				extraCls := ""
+				extraText := fmt.Sprintf(", latency %s", st.latency.Round(time.Millisecond))
+				if st.currentState != "OK" {
+					col = "#ff0000"
+					extraCls = "box-wide"
+					extraText = ""
+				}
+
+				since := time.Since(st.lastStateTransition).Round(time.Second)
+
+				str += fmt.Sprintf("<div class=\"box %s\" title=\"%s\"><b>%s</b><br><span style=\"color:%s\">%s</span> since %s%s</div>\n",
+					extraCls, st.desc, name, col, st.currentState, since, extraText)
 			}
 
-			since := time.Since(st.lastStateTransition).Round(time.Second)
-
-			str += fmt.Sprintf("<div class=\"box %s\" title=\"%s\"><b>%s</b><br><span style=\"color:%s\">%s</span> since %s%s</div>\n",
-				extraCls, st.desc, name, col, st.currentState, since, extraText)
+			//str += "</ul>\n"
 		}
 
-		//str += "</ul>\n"
+		str += "</head></body>"
 	}
-
-	str += "</head></body>"
 
 	wr.Header().Set("Content-Type", "text/html; charset=UTF-8")
 	wr.Write([]byte(str))
