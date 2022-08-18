@@ -69,6 +69,8 @@ func instantiateProbe(n *yaml.Node, bp *BaseProbe) (Probe, error) {
 		p = &DNSProbe{BaseProbe: *bp}
 	case "smtp":
 		p = &SMTPProbe{BaseProbe: *bp}
+	case "imap":
+		p = &IMAPProbe{BaseProbe: *bp}
 	default:
 		var dec interface{}
 		n.Decode(&dec)

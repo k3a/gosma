@@ -25,6 +25,10 @@ probes:
   test_smtp:
     type: smtp
     server: smtp.gmail.com
+  test_imap:
+    type: imap
+    server: imap.gmail.com
+    tls: true
 
 watchers:
   - type: dashboard
