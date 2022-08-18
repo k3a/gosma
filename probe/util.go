@@ -31,10 +31,17 @@ addDefaultPort:
 }
 
 func socketClient(network string, address string, timeout time.Duration, requireTLS bool) (io.ReadWriteCloser, error) {
+	h, _, err := net.SplitHostPort(address)
+	if err != nil {
+		return nil, err
+	}
+
 	conn, err := net.DialTimeout(network, address, timeout)
 
 	if err == nil && requireTLS {
-		tlsConn := tls.Client(conn, &tls.Config{})
+		tlsConn := tls.Client(conn, &tls.Config{
+			ServerName: h,
+		})
 		return tlsConn, tlsConn.Handshake()
 	}
 
