@@ -106,15 +106,17 @@ func (w *DashboardWatcher) indexHandler(wr http.ResponseWriter, r *http.Request)
 
 			col := "#00ff00"
 			extraCls := ""
+			extraText := fmt.Sprintf(", latency %s", st.latency.Round(time.Millisecond))
 			if st.currentState != "OK" {
 				col = "#ff0000"
 				extraCls = "box-wide"
+				extraText = ""
 			}
 
 			since := time.Since(st.lastStateTransition).Round(time.Second)
 
-			str += fmt.Sprintf("<div class=\"box %s\"><b>%s</b> %s <small>%s</small><br><span style=\"color:%s\">%s</span> since %s</div>\n",
-				extraCls, name, st.latency.Round(time.Microsecond), st.desc, col, st.currentState, since)
+			str += fmt.Sprintf("<div class=\"box %s\" title=\"%s\"><b>%s</b><br><span style=\"color:%s\">%s</span> since %s%s</div>\n",
+				extraCls, st.desc, name, col, st.currentState, since, extraText)
 		}
 
 		//str += "</ul>\n"
