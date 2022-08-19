@@ -7,12 +7,12 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+
+	"github.com/k3a/gosma/config"
 )
 
-const DefaultUserAgent = "gosma"
-
-type HTTPProbe struct {
-	BaseProbe
+type HTTP struct {
+	base
 	URL     string            `yaml:"url"`
 	Method  string            `yaml:"method"`
 	Body    string            `yaml:"body"`
@@ -22,11 +22,11 @@ type HTTPProbe struct {
 	StatusCode    int    `yaml:"status_code"`
 }
 
-func (p *HTTPProbe) err(f string, args ...interface{}) error {
+func (p *HTTP) err(f string, args ...interface{}) error {
 	return fmt.Errorf("http: "+f, args...)
 }
 
-func (p *HTTPProbe) String() string {
+func (p *HTTP) String() string {
 	attrs := "url=" + p.URL
 	if p.ResponseMatch != "" {
 		attrs += ", response_match=" + p.ResponseMatch
@@ -37,7 +37,7 @@ func (p *HTTPProbe) String() string {
 	return fmt.Sprintf("HTTPProbe(%s)", attrs)
 }
 
-func (p *HTTPProbe) RunLoop(stop <-chan struct{}, res ProbeResultReceiver) error {
+func (p *HTTP) RunLoop(stop <-chan struct{}, res ResultReceiver) error {
 	// validate
 	if p.URL == "" {
 		return p.err("parameter url is required")
@@ -61,7 +61,7 @@ func (p *HTTPProbe) RunLoop(stop <-chan struct{}, res ProbeResultReceiver) error
 	}
 
 	// headers
-	req.Header.Set("User-Agent", DefaultUserAgent)
+	req.Header.Set("User-Agent", config.C.Name)
 	for k, v := range p.Headers {
 		req.Header.Set(k, v)
 	}

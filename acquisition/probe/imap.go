@@ -8,23 +8,23 @@ import (
 	"github.com/k3a/gosma/util"
 )
 
-type IMAPProbe struct {
-	BaseProbe
+type IMAP struct {
+	base
 
 	Server string `yaml:"server"`
 	TLS    bool   `yaml:"tls"`
 }
 
-func (p *IMAPProbe) err(f string, args ...interface{}) error {
+func (p *IMAP) err(f string, args ...interface{}) error {
 	return fmt.Errorf("imap: "+f, args...)
 }
 
-func (p *IMAPProbe) String() string {
+func (p *IMAP) String() string {
 	attrs := "server=" + p.Server
 	return fmt.Sprintf("IMAP(%s)", attrs)
 }
 
-func (p *IMAPProbe) RunLoop(stop <-chan struct{}, res ProbeResultReceiver) error {
+func (p *IMAP) RunLoop(stop <-chan struct{}, res ResultReceiver) error {
 	// validate
 	if p.Server == "" {
 		return p.err("server parameter is required")
@@ -44,7 +44,7 @@ func (p *IMAPProbe) RunLoop(stop <-chan struct{}, res ProbeResultReceiver) error
 			if scanner.Scan() {
 				t := scanner.Text()
 				if len(t) < 4 {
-					err = p.err("not enough data received from the server")
+					err = p.err("not enough data received from the server (received '%s')", t)
 				}
 				if !strings.HasPrefix(t, "* OK") {
 					err = p.err("the server did not respond with an OK message")

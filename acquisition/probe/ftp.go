@@ -7,23 +7,23 @@ import (
 	"github.com/k3a/gosma/util"
 )
 
-type FTPProbe struct {
-	BaseProbe
+type FTP struct {
+	base
 
 	Server string `yaml:"server"`
 	TLS    bool   `yaml:"tls"`
 }
 
-func (p *FTPProbe) err(f string, args ...interface{}) error {
+func (p *FTP) err(f string, args ...interface{}) error {
 	return fmt.Errorf("ftp: "+f, args...)
 }
 
-func (p *FTPProbe) String() string {
+func (p *FTP) String() string {
 	attrs := "server=" + p.Server
 	return fmt.Sprintf("Socket(%s)", attrs)
 }
 
-func (p *FTPProbe) RunLoop(stop <-chan struct{}, res ProbeResultReceiver) error {
+func (p *FTP) RunLoop(stop <-chan struct{}, res ResultReceiver) error {
 	// validate
 	if p.Server == "" {
 		return p.err("server parameter is required")
@@ -38,11 +38,11 @@ func (p *FTPProbe) RunLoop(stop <-chan struct{}, res ProbeResultReceiver) error 
 			ok := false
 			for scanner.Scan() {
 				t := scanner.Text()
-				if len(t) < 4 {
+				if len(t) < 3 {
 					break
 				}
 				// skip multi-line response
-				if t[3] == '-' {
+				if len(t) > 3 && t[3] == '-' {
 					continue
 				}
 
@@ -55,7 +55,7 @@ func (p *FTPProbe) RunLoop(stop <-chan struct{}, res ProbeResultReceiver) error 
 			}
 
 			if !ok {
-				err = p.err("not enough data received from the server")
+				err = p.err("not enough data received (received '%s')", scanner.Text())
 			}
 
 			if err == nil {

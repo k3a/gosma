@@ -7,23 +7,23 @@ import (
 	"github.com/k3a/gosma/util"
 )
 
-type SMTPProbe struct {
-	BaseProbe
+type SMTP struct {
+	base
 
 	Server string `yaml:"server"`
 	TLS    bool   `yaml:"tls"`
 }
 
-func (p *SMTPProbe) err(f string, args ...interface{}) error {
+func (p *SMTP) err(f string, args ...interface{}) error {
 	return fmt.Errorf("smtp: "+f, args...)
 }
 
-func (p *SMTPProbe) String() string {
+func (p *SMTP) String() string {
 	attrs := "server=" + p.Server
 	return fmt.Sprintf("SMTP(%s)", attrs)
 }
 
-func (p *SMTPProbe) RunLoop(stop <-chan struct{}, res ProbeResultReceiver) error {
+func (p *SMTP) RunLoop(stop <-chan struct{}, res ResultReceiver) error {
 	// validate
 	if p.Server == "" {
 		return p.err("server parameter is required")
@@ -39,11 +39,11 @@ func (p *SMTPProbe) RunLoop(stop <-chan struct{}, res ProbeResultReceiver) error
 			expect := func(code string) (ok bool, err error) {
 				for scanner.Scan() {
 					t := scanner.Text()
-					if len(t) < 4 {
-						return false, p.err("not enough data received from the server")
+					if len(t) < 3 {
+						return false, p.err("not enough data received from the server (received '%s')", t)
 					}
 					// skip multi-line response
-					if t[3] == '-' {
+					if len(t) > 3 && t[3] == '-' {
 						continue
 					}
 

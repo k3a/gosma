@@ -9,8 +9,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/k3a/gosma/acquisition/probe"
 	"github.com/k3a/gosma/config"
-	"github.com/k3a/gosma/probe"
+	"github.com/k3a/gosma/observation"
 	"gopkg.in/yaml.v3"
 )
 
@@ -21,8 +22,8 @@ type dashboardServiceStatus struct {
 	latency             time.Duration
 }
 
-type DashboardWatcher struct {
-	baseWatcher
+type Dashboard struct {
+	base
 
 	YListen string `yaml:"listen"`
 
@@ -32,15 +33,15 @@ type DashboardWatcher struct {
 	lowestUpdateIntervalSec int
 }
 
-func (w *DashboardWatcher) err(estr string, args ...interface{}) error {
+func (w *Dashboard) err(estr string, args ...interface{}) error {
 	return fmt.Errorf("dashboard watcher: "+estr, args...)
 }
 
-func (w *DashboardWatcher) log(str string, args ...interface{}) {
+func (w *Dashboard) log(str string, args ...interface{}) {
 	log.Printf("dashboard watcher: "+str, args...)
 }
 
-func (w *DashboardWatcher) Init(n *yaml.Node) error {
+func (w *Dashboard) Init(n *yaml.Node) error {
 	w.status = make(map[string]*dashboardServiceStatus)
 	w.lowestUpdateIntervalSec = 1
 
@@ -68,7 +69,7 @@ func (w *DashboardWatcher) Init(n *yaml.Node) error {
 	return nil
 }
 
-func (w *DashboardWatcher) indexHandler(wr http.ResponseWriter, r *http.Request) {
+func (w *Dashboard) indexHandler(wr http.ResponseWriter, r *http.Request) {
 	str := ""
 
 	if r.URL.Query().Get("content") != "1" {
@@ -167,7 +168,7 @@ func (w *DashboardWatcher) indexHandler(wr http.ResponseWriter, r *http.Request)
 	wr.Write([]byte(str))
 }
 
-func (w *DashboardWatcher) HandleProbeResult(p probe.Probe, d time.Duration, perr error) error {
+func (w *Dashboard) ProbeStateChanged(p probe.Probe, ost observation.ProbeStatus) error {
 	w.m.Lock()
 	defer w.m.Unlock()
 
@@ -179,18 +180,9 @@ func (w *DashboardWatcher) HandleProbeResult(p probe.Probe, d time.Duration, per
 		w.status[name] = st
 	}
 
-	st.latency = d
-
-	newState := "OK"
-	if perr != nil {
-		newState = perr.Error()
-	}
-
-	// state change
-	if st.currentState != newState {
-		st.currentState = newState
-		st.lastStateTransition = time.Now()
-	}
+	st.latency = ost.Latency
+	st.currentState = ost.CurrentState
+	st.lastStateTransition = ost.LastStateTransition
 
 	if st.desc == "" {
 		st.desc = p.Description()

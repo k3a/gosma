@@ -5,23 +5,17 @@ import (
 	"log"
 	"net/smtp"
 	"strings"
-	"sync"
 	"time"
 
+	"github.com/k3a/gosma/acquisition/probe"
 	"github.com/k3a/gosma/config"
-	"github.com/k3a/gosma/probe"
+	"github.com/k3a/gosma/observation"
 	"github.com/k3a/gosma/util"
 	"gopkg.in/yaml.v3"
 )
 
-type smtpServiceStatus struct {
-	lastStateTransition time.Time
-	currentState        string
-	inited              bool
-}
-
-type SMTPAlerter struct {
-	baseAlerter
+type SMTP struct {
+	base
 
 	Server     string `yaml:"server"`
 	From       string `yaml:"from"`
@@ -31,22 +25,17 @@ type SMTPAlerter struct {
 	Identity   string `yaml:"identity"`
 	CRMMD5     bool   `yaml:"crammd5"`
 	DisableTLS bool   `yaml:"disable_tls"`
-
-	m      sync.RWMutex
-	status map[string]*smtpServiceStatus
 }
 
-func (a *SMTPAlerter) err(estr string, args ...interface{}) error {
+func (a *SMTP) err(estr string, args ...interface{}) error {
 	return fmt.Errorf("smtp alerter: "+estr, args...)
 }
 
-func (a *SMTPAlerter) log(str string, args ...interface{}) {
+func (a *SMTP) log(str string, args ...interface{}) {
 	log.Printf("smtp alerter: "+str, args...)
 }
 
-func (a *SMTPAlerter) Init(n *yaml.Node) error {
-	a.status = make(map[string]*smtpServiceStatus)
-
+func (a *SMTP) Init(n *yaml.Node) error {
 	err := n.Decode(&a)
 	if err != nil {
 		return err
@@ -68,7 +57,7 @@ func (a *SMTPAlerter) Init(n *yaml.Node) error {
 	return nil
 }
 
-func (a *SMTPAlerter) sendAlert(title, text string) error {
+func (a *SMTP) sendAlert(title, text string) error {
 	var auth smtp.Auth
 
 	if a.Username != "" && a.Password != "" {
@@ -118,43 +107,28 @@ func (a *SMTPAlerter) sendAlert(title, text string) error {
 	return err
 }
 
-func (a *SMTPAlerter) HandleProbeResult(p probe.Probe, d time.Duration, perr error) (err error) {
-	a.m.Lock()
-	defer a.m.Unlock()
-
+func (a *SMTP) ProbeStateChanged(p probe.Probe, st observation.ProbeStatus) (err error) {
 	name := p.Name()
 
-	st, has := a.status[name]
-	if !has {
-		st = &smtpServiceStatus{}
-		a.status[name] = st
-	}
+	title := ""
+	desc := ""
 
-	newState := "OK"
-	newTitle := fmt.Sprintf("%s alert: %s OK", config.C.Name, name)
-	newDesc := fmt.Sprintf("Service %s recovered after %s", name, time.Since(st.lastStateTransition).Round(time.Second))
-	if perr != nil {
-		newState = perr.Error()
-		newTitle = fmt.Sprintf("%s alert: %s FAIL", config.C.Name, name)
-		newDesc = fmt.Sprintf("Service %s failed with %s", name, newState)
+	if st.CurrentState == "OK" {
+		title = fmt.Sprintf("%s alert: %s OK", config.C.Name, name)
+		desc = fmt.Sprintf("%s recovered after %s", name, time.Since(st.LastStateTransition).Round(time.Second))
+	} else {
+		title = fmt.Sprintf("%s alert: %s FAIL", config.C.Name, name)
+		desc = fmt.Sprintf("%s failed with %s", name, st.CurrentState)
 	}
 
 	if config.C.URL != "" {
-		newDesc += "\n" + config.C.URL
+		desc += "\n" + config.C.URL
 	}
 
-	// state change
-	if st.currentState != newState {
-		st.currentState = newState
-		st.lastStateTransition = time.Now()
-
-		// send notification
-		if st.inited || newState != "OK" {
-			err = a.sendAlert(newTitle, newDesc)
-		}
+	// send notification
+	if a.shouldAlert(p, st) {
+		err = a.sendAlert(title, desc)
 	}
-
-	st.inited = true
 
 	return err
 }

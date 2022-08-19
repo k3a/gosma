@@ -1,7 +1,12 @@
+delay: 10s
 probes:
   test_http:
     type: http
+    update_every: 10s
     url: http://localhost:1122
+    exec_after: 2
+    exec_on_success: echo service works again
+    exec_on_failure: echo service stopped working
   test_file:
     type: file
     path: /temp/file

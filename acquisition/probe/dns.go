@@ -9,19 +9,19 @@ import (
 	"github.com/k3a/gosma/util"
 )
 
-type DNSProbe struct {
-	BaseProbe
+type DNS struct {
+	base
 
 	Server    string `yaml:"server"`
 	QueryType string `yaml:"query_type"`
 	Query     string `yaml:"query"`
 }
 
-func (p *DNSProbe) err(f string, args ...interface{}) error {
+func (p *DNS) err(f string, args ...interface{}) error {
 	return fmt.Errorf("dns: "+f, args...)
 }
 
-func (p *DNSProbe) String() string {
+func (p *DNS) String() string {
 	attrs := "query=" + p.Query
 	if p.QueryType != "" {
 		attrs += ", query_type=" + p.QueryType
@@ -32,7 +32,7 @@ func (p *DNSProbe) String() string {
 	return fmt.Sprintf("Socket(%s)", attrs)
 }
 
-func (p *DNSProbe) RunLoop(stop <-chan struct{}, res ProbeResultReceiver) error {
+func (p *DNS) RunLoop(stop <-chan struct{}, res ResultReceiver) error {
 	// validate
 	if p.Query == "" {
 		return p.err("query parameter is required")

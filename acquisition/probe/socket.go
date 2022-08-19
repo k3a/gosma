@@ -7,8 +7,8 @@ import (
 	"github.com/k3a/gosma/util"
 )
 
-type SocketProbe struct {
-	BaseProbe
+type Socket struct {
+	base
 
 	SocketType    string `yaml:"socket_type"`
 	Address       string `yaml:"address"`
@@ -17,11 +17,11 @@ type SocketProbe struct {
 	TLSServerName string `yaml:"tls_server_name"`
 }
 
-func (p *SocketProbe) err(f string, args ...interface{}) error {
+func (p *Socket) err(f string, args ...interface{}) error {
 	return fmt.Errorf("socket: "+f, args...)
 }
 
-func (p *SocketProbe) String() string {
+func (p *Socket) String() string {
 	attrs := "socket_type=" + p.SocketType
 	if p.Address != "" {
 		attrs += ", address=" + p.Address
@@ -35,7 +35,7 @@ func (p *SocketProbe) String() string {
 	return fmt.Sprintf("Socket(%s)", attrs)
 }
 
-func (p *SocketProbe) RunLoop(stop <-chan struct{}, res ProbeResultReceiver) error {
+func (p *Socket) RunLoop(stop <-chan struct{}, res ResultReceiver) error {
 	// validate
 	if p.SocketType == "" {
 		p.SocketType = "tcp"

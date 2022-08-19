@@ -9,18 +9,22 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type BaseProbe struct {
+type base struct {
 	name     string
 	parent   Probe
-	children ProbeMap
+	children Map
 	runStart time.Time
 
-	YType        string        `yaml:"type"`
-	YDescription string        `yaml:"description"`
-	YUpdateEvery time.Duration `yaml:"update_every"`
+	YType          string        `yaml:"type"`
+	YDescription   string        `yaml:"description"`
+	YUpdateEvery   time.Duration `yaml:"update_every"`
+	YAlertAfter    int           `yaml:"alert_after"`     // alert after this many cycles
+	YExecAfter     int           `yaml:"exec_after"`      // exec a command after this many cycles
+	YExecOnSuccess string        `yaml:"exec_on_success"` // exec a command on transistion to the success state
+	YExecOnFailure string        `yaml:"exec_on_failure"` // exec a command on transistion to the failed state
 }
 
-func (bp *BaseProbe) nextRun(stop <-chan struct{}) bool {
+func (bp *base) nextRun(stop <-chan struct{}) bool {
 	randExtra := time.Duration(rand.Intn(200)-100) * time.Millisecond
 
 	select {
@@ -32,18 +36,18 @@ func (bp *BaseProbe) nextRun(stop <-chan struct{}) bool {
 	}
 }
 
-func (bp *BaseProbe) runDuration() time.Duration {
+func (bp *base) runDuration() time.Duration {
 	if bp.runStart.IsZero() {
 		return 0
 	}
 	return time.Since(bp.runStart)
 }
 
-func (bp *BaseProbe) RunLoop(stop <-chan struct{}, res ProbeResultReceiver) error {
+func (bp *base) RunLoop(stop <-chan struct{}, res ResultReceiver) error {
 	return nil
 }
 
-func (bp *BaseProbe) Name() string {
+func (bp *base) Name() string {
 	t := bp.name
 
 	p := bp.Parent()
@@ -55,27 +59,43 @@ func (bp *BaseProbe) Name() string {
 	return t
 }
 
-func (bp *BaseProbe) Parent() Probe {
+func (bp *base) Parent() Probe {
 	return bp.parent
 }
 
-func (bp *BaseProbe) Type() string {
+func (bp *base) Type() string {
 	return bp.YType
 }
 
-func (bp *BaseProbe) Description() string {
+func (bp *base) Description() string {
 	return bp.YDescription
 }
 
-func (bp *BaseProbe) UpdateEvery() time.Duration {
+func (bp *base) UpdateEvery() time.Duration {
 	return bp.YUpdateEvery
 }
 
-func (bp *BaseProbe) Children() ProbeMap {
+func (bp *base) AlertAfter() int {
+	return bp.YAlertAfter
+}
+
+func (bp *base) ExecAfter() int {
+	return bp.YExecAfter
+}
+
+func (bp *base) ExecOnSuccess() string {
+	return bp.YExecOnSuccess
+}
+
+func (bp *base) ExecOnFailure() string {
+	return bp.YExecOnFailure
+}
+
+func (bp *base) Children() Map {
 	return bp.children
 }
 
-func (bp *BaseProbe) String() string {
+func (bp *base) String() string {
 	if bp == nil {
 		return "<nil>"
 	}
@@ -96,8 +116,8 @@ func (bp *BaseProbe) String() string {
 	return s[:len(s)-1]
 }
 
-func instantiateBaseProbe(parent *BaseProbe, n *yaml.Node, name string) (*BaseProbe, error) {
-	var bp BaseProbe
+func instantiateBaseProbe(parent *base, n *yaml.Node, name string) (*base, error) {
+	var bp base
 
 	// apply defautls by copying from the parent
 	if parent != nil {

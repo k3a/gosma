@@ -2,26 +2,22 @@ package config
 
 import (
 	"os"
+	"time"
 
 	"gopkg.in/yaml.v3"
 )
 
 var Buildstamp = "DEBUG"
 
+const defaultName = "GoSMA"
+
 type config struct {
-	Name     string      `yaml:"name"`
-	URL      string      `yaml:"url"`
-	Probes   yaml.Node   `yaml:"probes"`
-	Watchers []yaml.Node `yaml:"watchers"`
-	Alerters []yaml.Node `yaml:"alerters"`
-}
-
-func (c *config) validateAndSetDefaults() error {
-	if c.Name == "" {
-		c.Name = "GoSMA"
-	}
-
-	return nil
+	Name     string        `yaml:"name"`  // custom product/install name
+	URL      string        `yaml:"url"`   // URL at which the installation responds
+	Delay    time.Duration `yaml:"delay"` // mute alers for this amount of time after startup
+	Probes   yaml.Node     `yaml:"probes"`
+	Watchers []yaml.Node   `yaml:"watchers"`
+	Alerters []yaml.Node   `yaml:"alerters"`
 }
 
 func (c *config) LoadFromFile(cpath string) error {
@@ -37,7 +33,13 @@ func (c *config) LoadFromFile(cpath string) error {
 		return err
 	}
 
-	return c.validateAndSetDefaults()
+	if c.Name == "" {
+		c.Name = defaultName
+	}
+
+	return nil
 }
 
-var C = &config{}
+var C = &config{
+	Name: defaultName,
+}

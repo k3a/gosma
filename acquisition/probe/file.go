@@ -9,8 +9,8 @@ import (
 	"github.com/djherbis/times"
 )
 
-type FileProbe struct {
-	BaseProbe
+type File struct {
+	base
 
 	// Path for file/directory existence and timestamp checks
 	Path string `yaml:"path"`
@@ -36,11 +36,11 @@ type FileProbe struct {
 	BtimeNotOlderThan time.Duration `yaml:"btime_not_older_than"`
 }
 
-func (p *FileProbe) err(f string, args ...interface{}) error {
+func (p *File) err(f string, args ...interface{}) error {
 	return fmt.Errorf("file: "+f, args...)
 }
 
-func (p *FileProbe) olderThanNotOlderThanCheck(olderThan, notOlderThan time.Duration, t time.Time) error {
+func (p *File) olderThanNotOlderThanCheck(olderThan, notOlderThan time.Duration, t time.Time) error {
 	if olderThan != 0 && time.Since(t) <= olderThan {
 		return fmt.Errorf("is not older than %v", olderThan)
 	} else if notOlderThan != 0 && time.Since(t) > notOlderThan {
@@ -49,12 +49,12 @@ func (p *FileProbe) olderThanNotOlderThanCheck(olderThan, notOlderThan time.Dura
 	return nil
 }
 
-func (p *FileProbe) String() string {
+func (p *File) String() string {
 	attrs := "path=" + p.Path
 	return fmt.Sprintf("File(%s)", attrs)
 }
 
-func (p *FileProbe) runFileExistenceAndTimestampChecks() error {
+func (p *File) runFileExistenceAndTimestampChecks() error {
 	fi, err := times.Stat(p.Path)
 	if err == nil {
 		changeOrModTime := fi.ModTime()
@@ -94,7 +94,7 @@ func (p *FileProbe) runFileExistenceAndTimestampChecks() error {
 	return err
 }
 
-func (p *FileProbe) RunLoop(stop <-chan struct{}, res ProbeResultReceiver) error {
+func (p *File) RunLoop(stop <-chan struct{}, res ResultReceiver) error {
 	// validate
 	if p.Path == "" && p.PathNotExists == "" && p.PathIsDirectory == "" && p.PathIsFile == "" {
 		return p.err("one of path, path_exists, path_is_file or path_is_directory parameters is required")

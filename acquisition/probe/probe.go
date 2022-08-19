@@ -7,7 +7,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type ProbeResultReceiver interface {
+type ResultReceiver interface {
 	// ProbeResult is called by a probe in a new gorountine
 	ProbeResult(p Probe, d time.Duration, err error)
 }
@@ -20,14 +20,18 @@ type Probe interface {
 	Type() string
 	Description() string
 	UpdateEvery() time.Duration
-	Children() ProbeMap
-	RunLoop(stop <-chan struct{}, res ProbeResultReceiver) error
+	AlertAfter() int
+	ExecAfter() int
+	ExecOnSuccess() string
+	ExecOnFailure() string
+	Children() Map
+	RunLoop(stop <-chan struct{}, res ResultReceiver) error
 }
 
-// ProbeMap is a map of probes
-type ProbeMap map[string]Probe
+// Map is a map of probes
+type Map map[string]Probe
 
-func (pm ProbeMap) String() string {
+func (pm Map) String() string {
 	s := ""
 	for k, v := range pm {
 		s += fmt.Sprintf("%s: %s\n", k, v)
@@ -52,25 +56,25 @@ func isMappingNodeWithScalarValues(node *yaml.Node) bool {
 	return true
 }
 
-func instantiateProbe(n *yaml.Node, bp *BaseProbe) (Probe, error) {
+func instantiateProbe(n *yaml.Node, bp *base) (Probe, error) {
 	t := bp.Type()
 	var p Probe
 
 	switch t {
 	case "http":
-		p = &HTTPProbe{BaseProbe: *bp}
+		p = &HTTP{base: *bp}
 	case "file":
-		p = &FileProbe{BaseProbe: *bp}
+		p = &File{base: *bp}
 	case "socket":
-		p = &SocketProbe{BaseProbe: *bp}
+		p = &Socket{base: *bp}
 	case "ftp":
-		p = &FTPProbe{BaseProbe: *bp}
+		p = &FTP{base: *bp}
 	case "dns":
-		p = &DNSProbe{BaseProbe: *bp}
+		p = &DNS{base: *bp}
 	case "smtp":
-		p = &SMTPProbe{BaseProbe: *bp}
+		p = &SMTP{base: *bp}
 	case "imap":
-		p = &IMAPProbe{BaseProbe: *bp}
+		p = &IMAP{base: *bp}
 	default:
 		var dec interface{}
 		n.Decode(&dec)
@@ -85,9 +89,9 @@ func instantiateProbe(n *yaml.Node, bp *BaseProbe) (Probe, error) {
 	return p, nil
 }
 
-// ParseProbesFromYAMLNode parses and instantiated a map of probes from a YAML MappingNode
-func ParseProbesFromYAMLNode(parent *BaseProbe, node *yaml.Node) (ProbeMap, error) {
-	m := make(ProbeMap)
+// FromYAMLNode parses and instantiated a map of probes from a YAML MappingNode
+func FromYAMLNode(parent *base, node *yaml.Node) (Map, error) {
+	m := make(Map)
 
 	key := true
 	keyName := ""
@@ -107,7 +111,7 @@ func ParseProbesFromYAMLNode(parent *BaseProbe, node *yaml.Node) (ProbeMap, erro
 					return nil, err
 				}
 			} else { // is group
-				bp.children, err = ParseProbesFromYAMLNode(bp, n)
+				bp.children, err = FromYAMLNode(bp, n)
 				if err != nil {
 					return nil, err
 				}
