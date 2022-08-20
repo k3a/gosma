@@ -16,7 +16,7 @@ func errChk(err error, desc string) {
 }
 
 func main() {
-	fmt.Println(config.C.Name + " " + config.Buildstamp + "\n")
+	fmt.Println("GoSMA " + config.Buildstamp + "\n")
 
 	if len(os.Args) == 1 {
 		fmt.Fprintf(os.Stderr, "Usage: %s <path-to-config>\n", os.Args[0])
