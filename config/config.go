@@ -12,12 +12,13 @@ var Buildstamp = "DEBUG"
 const defaultName = "GoSMA"
 
 type config struct {
-	Name     string        `yaml:"name"`  // custom product/install name
-	URL      string        `yaml:"url"`   // URL at which the installation responds
-	Delay    time.Duration `yaml:"delay"` // mute alers for this amount of time after startup
-	Probes   yaml.Node     `yaml:"probes"`
-	Watchers []yaml.Node   `yaml:"watchers"`
-	Alerters []yaml.Node   `yaml:"alerters"`
+	Name          string        `yaml:"name"`           // custom product/install name
+	URL           string        `yaml:"url"`            // URL at which the installation responds
+	Delay         time.Duration `yaml:"delay"`          // mute alers for this amount of time after startup
+	RandomizePerc float64       `yaml:"randomize_perc"` // randomize update_for + or - this amount of percent
+	Probes        yaml.Node     `yaml:"probes"`
+	Watchers      []yaml.Node   `yaml:"watchers"`
+	Alerters      []yaml.Node   `yaml:"alerters"`
 }
 
 func (c *config) LoadFromFile(cpath string) error {
@@ -41,5 +42,6 @@ func (c *config) LoadFromFile(cpath string) error {
 }
 
 var C = &config{
-	Name: defaultName,
+	Name:          defaultName,
+	RandomizePerc: 5,
 }

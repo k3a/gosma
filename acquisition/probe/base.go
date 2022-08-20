@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/k3a/gosma/config"
 	"gopkg.in/yaml.v3"
 )
 
@@ -25,12 +26,12 @@ type base struct {
 }
 
 func (bp *base) nextRun(stop <-chan struct{}) bool {
-	randExtra := time.Duration(rand.Intn(200)-100) * time.Millisecond
+	randExtra := float64(bp.UpdateEvery()) * (config.C.RandomizePerc / 100.0) * (rand.Float64() - 0.5)
 
 	select {
 	case <-stop:
 		return false
-	case <-time.After(bp.UpdateEvery() + randExtra):
+	case <-time.After(bp.UpdateEvery() + time.Duration(randExtra)):
 		bp.runStart = time.Now()
 		return true
 	}
@@ -127,7 +128,7 @@ func instantiateBaseProbe(parent *base, n *yaml.Node, name string) (*base, error
 	bp.parent = parent
 	bp.name = name
 
-	// apply additional defaults for zeros
+	// apply additional defaults for zeroes
 	if bp.YUpdateEvery == 0 {
 		bp.YUpdateEvery = 30 * time.Second
 	}
