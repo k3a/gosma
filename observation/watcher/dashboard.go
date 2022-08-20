@@ -154,7 +154,7 @@ func (w *Dashboard) indexHandler(wr http.ResponseWriter, r *http.Request) {
 
 				since := time.Since(st.lastStateTransition).Round(time.Second)
 
-				str += fmt.Sprintf("<div class=\"box %s\" title=\"%s\"><b>%s</b><br><span style=\"color:%s\">%s</span> since %s%s</div>\n",
+				str += fmt.Sprintf("<div class=\"box %s\" title=\"%s\"><b>%s</b><br><span style=\"color:%s\">%s</span> for %s%s</div>\n",
 					extraCls, st.desc, name, col, st.currentState, since, extraText)
 			}
 

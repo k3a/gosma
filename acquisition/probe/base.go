@@ -51,9 +51,8 @@ func (bp *base) Name() string {
 	t := bp.name
 
 	p := bp.Parent()
-	for !reflect.ValueOf(p).IsNil() {
+	if !reflect.ValueOf(p).IsNil() {
 		t = p.Name() + "." + t
-		p = p.Parent()
 	}
 
 	return t

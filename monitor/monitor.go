@@ -151,10 +151,10 @@ func (m *Monitor) ProbeResult(p probe.Probe, d time.Duration, err error) {
 	if st.CurrentState != newState {
 		if st.CurrentState == "" {
 			st.CurrentState = initialState
+			st.LastStateTransition = time.Now()
 		}
 		st.PreviousState = st.CurrentState
 		st.CurrentState = newState
-		st.LastStateTransition = time.Now()
 		st.NumCyclesInCurrentState = 0
 	}
 
@@ -167,7 +167,6 @@ func (m *Monitor) ProbeResult(p probe.Probe, d time.Duration, err error) {
 			// just unmuted, set the previous state to the initial
 			st.Unmuted = true
 			st.PreviousState = initialState
-			st.LastStateTransition = time.Now()
 			st.NumCyclesInCurrentState = 0
 		}
 	}
@@ -199,9 +198,16 @@ func (m *Monitor) ProbeResult(p probe.Probe, d time.Duration, err error) {
 		}
 	}(m.Alerters, *st)
 
-	// exec on state change
-	if st.PreviousState != st.CurrentState { // condition to ignore init/startup situation
+	// stuff to do for a state change after watchers/alerters are processed
+	// code in this block is also not run during "muted" period caused by config.C.delay
+	if st.PreviousState != st.CurrentState {
+		// run execs on state change
 		m.execOnStateChange(p, st.CurrentState, st.NumCyclesInCurrentState)
+
+		// Record timetamp of this state change as the last thing.
+		// This has to be done _after_ running watchers/alerters/execs as they need to know
+		// the timestamp of the previous state change not the current one which is "now"
+		st.LastStateTransition = time.Now()
 	}
 }
 

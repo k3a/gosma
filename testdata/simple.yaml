@@ -22,18 +22,22 @@ probes:
     type: dns
     server: 8.8.8.8
     query: google.com
-  test_dns_nonexisten_mx:
-    type: dns
-    server: 8.8.8.8
-    query: httpbin.org
-    query_type: MX
-  test_smtp:
-    type: smtp
-    server: smtp.gmail.com
-  test_imap:
-    type: imap
-    server: imap.gmail.com
-    tls: true
+  group:
+    description: group of probes, type and description attributes declared here will be inherited by the probes
+    test_dns_nonexisten_mx:
+      type: dns
+      server: 8.8.8.8
+      query: httpbin.org
+      query_type: MX
+    subgroup:
+      description: subgroup in a group
+      test_smtp:
+        type: smtp
+        server: smtp.gmail.com
+      test_imap:
+        type: imap
+        server: imap.gmail.com
+        tls: true
 
 watchers:
   - type: dashboard
