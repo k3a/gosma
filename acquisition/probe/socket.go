@@ -53,9 +53,9 @@ func (p *Socket) RunLoop(stop <-chan struct{}, res ResultReceiver) error {
 			err  error
 		)
 		if p.SocketType == "unix" {
-			conn, err = util.SocketClient("unix", p.Path, p.UpdateEvery(), p.TLS, p.TLSServerName)
+			conn, err = util.SocketClient("unix", p.Path, p.Timeout(), p.TLS, p.TLSServerName)
 		} else {
-			conn, err = util.SocketClient(p.SocketType, p.Address, p.UpdateEvery(), p.TLS, p.TLSServerName)
+			conn, err = util.SocketClient(p.SocketType, p.Address, p.Timeout(), p.TLS, p.TLSServerName)
 		}
 
 		if err == nil {

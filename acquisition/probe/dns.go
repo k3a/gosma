@@ -53,13 +53,13 @@ func (p *DNS) RunLoop(stop <-chan struct{}, res ResultReceiver) error {
 			r.PreferGo = true
 			r.Dial = func(ctx context.Context, network, address string) (net.Conn, error) {
 				d := net.Dialer{
-					Timeout: p.UpdateEvery(),
+					Timeout: p.Timeout(),
 				}
 				return d.DialContext(ctx, network, p.Server)
 			}
 		}
 
-		ctx, cancel := context.WithTimeout(context.Background(), p.UpdateEvery())
+		ctx, cancel := context.WithTimeout(context.Background(), p.Timeout())
 
 		switch strings.ToUpper(p.QueryType) {
 		case "A", "AAAA":

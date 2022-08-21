@@ -12,6 +12,7 @@ import (
 	"github.com/k3a/gosma/acquisition/probe"
 	"github.com/k3a/gosma/config"
 	"github.com/k3a/gosma/observation"
+	"github.com/k3a/gosma/util"
 	"gopkg.in/yaml.v3"
 )
 
@@ -74,6 +75,7 @@ func (w *Dashboard) indexHandler(wr http.ResponseWriter, r *http.Request) {
 
 	if r.URL.Query().Get("content") != "1" {
 		str = `<!DOCTYPE html><html><head><title>` + config.C.Name + `</title>
+		<meta name="viewport" content="width=800, initial-scale=1">
 		<script>
 		function ensureIframeLoaded() {
 			var iframe = document.getElementById('content');
@@ -114,17 +116,29 @@ func (w *Dashboard) indexHandler(wr http.ResponseWriter, r *http.Request) {
 		body {
 			background-color: #000;
 			color: #fff;
+			font-family: Arial, Helvetica, sans-serif;
+			font-size: 12pt;
+			margin:0;
+		}
+		a {
+			color: #ddf;
+		}
+		a:visited {
+			color: #bbf;
+		}
+		a:hover {
+			color: #ccf;
 		}
 		.box {
 			margin: 5px;
 			background-color: #222;
 			display: inline-block;
-			min-width: 150px;
+			min-width: 220px;
 			padding: 5px;
 			white-space: nowrap;
 		}
 		.box-wide {
-		min-width: 400px;
+			min-width: 400px;
 		}
 		</style>`
 		str += "</head><body>\n"
@@ -152,7 +166,7 @@ func (w *Dashboard) indexHandler(wr http.ResponseWriter, r *http.Request) {
 					extraText = ""
 				}
 
-				since := time.Since(st.lastStateTransition).Round(time.Second)
+				since := util.CompactDuration(time.Since(st.lastStateTransition), 2)
 
 				str += fmt.Sprintf("<div class=\"box %s\" title=\"%s\"><b>%s</b><br><span style=\"color:%s\">%s</span> for %s%s</div>\n",
 					extraCls, st.desc, name, col, st.currentState, since, extraText)
@@ -161,7 +175,8 @@ func (w *Dashboard) indexHandler(wr http.ResponseWriter, r *http.Request) {
 			//str += "</ul>\n"
 		}
 
-		str += "</head></body>"
+		str += "<br><br><small>" + config.Footer + "</small>"
+		str += "</body></html>"
 	}
 
 	wr.Header().Set("Content-Type", "text/html; charset=UTF-8")

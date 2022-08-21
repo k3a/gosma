@@ -68,7 +68,7 @@ func (p *HTTP) RunLoop(stop <-chan struct{}, res ResultReceiver) error {
 
 	// client
 	cli := &http.Client{
-		Timeout: p.UpdateEvery(),
+		Timeout: p.Timeout(),
 	}
 
 	for {

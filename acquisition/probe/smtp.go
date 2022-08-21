@@ -31,7 +31,7 @@ func (p *SMTP) RunLoop(stop <-chan struct{}, res ResultReceiver) error {
 	p.Server = util.EnsureAddressWithPort(p.Server, 25)
 
 	for {
-		conn, err := util.SocketClient("tcp", p.Server, p.UpdateEvery(), p.TLS, "")
+		conn, err := util.SocketClient("tcp", p.Server, p.Timeout(), p.TLS, "")
 
 		if err == nil {
 			scanner := bufio.NewScanner(conn)

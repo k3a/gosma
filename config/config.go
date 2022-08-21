@@ -9,7 +9,11 @@ import (
 
 var Buildstamp = "DEBUG"
 
-const defaultName = "GoSMA"
+const (
+	Product    = "GoSMA"
+	ProductURL = "https://github.com/k3a/gosma"
+	Footer     = "<a href=\"" + ProductURL + "\" target=\"_blank\">" + Product + "</a> - Simple Monitoring and Alerting in Go"
+)
 
 type config struct {
 	Name          string        `yaml:"name"`           // custom product/install name
@@ -35,13 +39,13 @@ func (c *config) LoadFromFile(cpath string) error {
 	}
 
 	if c.Name == "" {
-		c.Name = defaultName
+		c.Name = Product
 	}
 
 	return nil
 }
 
 var C = &config{
-	Name:          defaultName,
+	Name:          Product,
 	RandomizePerc: 5,
 }

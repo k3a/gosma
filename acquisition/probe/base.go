@@ -16,9 +16,10 @@ type base struct {
 	children Map
 	runStart time.Time
 
-	YType          string        `yaml:"type"`
-	YDescription   string        `yaml:"description"`
-	YUpdateEvery   time.Duration `yaml:"update_every"`
+	YType          string        `yaml:"type"`            // type of the probe
+	YDescription   string        `yaml:"description"`     // optional description of the probe or group
+	YUpdateEvery   time.Duration `yaml:"update_every"`    // update (run a check) in this frequency
+	YTimeout       time.Duration `yaml:"timeout"`         // probe timeout (same as update_every by default)
 	YAlertAfter    int           `yaml:"alert_after"`     // alert after this many cycles
 	YExecAfter     int           `yaml:"exec_after"`      // exec a command after this many cycles
 	YExecOnSuccess string        `yaml:"exec_on_success"` // exec a command on transistion to the success state
@@ -75,6 +76,10 @@ func (bp *base) UpdateEvery() time.Duration {
 	return bp.YUpdateEvery
 }
 
+func (bp *base) Timeout() time.Duration {
+	return bp.YTimeout
+}
+
 func (bp *base) AlertAfter() int {
 	return bp.YAlertAfter
 }
@@ -128,12 +133,15 @@ func instantiateBaseProbe(parent *base, n *yaml.Node, name string) (*base, error
 	bp.parent = parent
 	bp.name = name
 
-	// apply additional defaults for zeroes
+	// apply additional defaults
 	if bp.YUpdateEvery == 0 {
 		bp.YUpdateEvery = 30 * time.Second
 	}
+	if bp.YTimeout == 0 {
+		bp.YTimeout = bp.YUpdateEvery
+	}
 
-	// potentially overwrite some by decoding from YAML
+	// potentially overwrite some fields by decoding from YAML
 	err := n.Decode(&bp)
 	if err != nil {
 		return nil, err

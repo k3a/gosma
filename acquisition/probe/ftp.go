@@ -31,7 +31,7 @@ func (p *FTP) RunLoop(stop <-chan struct{}, res ResultReceiver) error {
 	p.Server = util.EnsureAddressWithPort(p.Server, 21)
 
 	for {
-		conn, err := util.SocketClient("tcp", p.Server, p.UpdateEvery(), p.TLS, "")
+		conn, err := util.SocketClient("tcp", p.Server, p.Timeout(), p.TLS, "")
 
 		if err == nil {
 			scanner := bufio.NewScanner(conn)

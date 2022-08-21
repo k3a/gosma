@@ -20,6 +20,7 @@ type Probe interface {
 	Type() string
 	Description() string
 	UpdateEvery() time.Duration
+	Timeout() time.Duration
 	AlertAfter() int
 	ExecAfter() int
 	ExecOnSuccess() string
