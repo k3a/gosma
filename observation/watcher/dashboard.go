@@ -129,11 +129,22 @@ func (w *Dashboard) indexHandler(wr http.ResponseWriter, r *http.Request) {
 		a:hover {
 			color: #ccf;
 		}
+		.title {
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			max-width: 230px;
+			display: inline-block;
+			font-weight: bold;
+		}
+		.box-wide .title {
+			max-width: 400px;
+		}
 		.box {
 			margin: 5px;
 			background-color: #222;
 			display: inline-block;
-			min-width: 220px;
+			min-width: 230px;
 			padding: 5px;
 			white-space: nowrap;
 		}
@@ -168,14 +179,14 @@ func (w *Dashboard) indexHandler(wr http.ResponseWriter, r *http.Request) {
 
 				since := util.CompactDuration(time.Since(st.lastStateTransition), 2)
 
-				str += fmt.Sprintf("<div class=\"box %s\" title=\"%s\"><b>%s</b><br><span style=\"color:%s\">%s</span> for %s%s</div>\n",
-					extraCls, st.desc, name, col, st.currentState, since, extraText)
+				str += fmt.Sprintf("<div class=\"box %s\" title=\"%s\"><div class=\"title\" title=\"%s\">%s</div><br><span style=\"color:%s\">%s</span> for %s%s</div>\n",
+					extraCls, st.desc, name, name, col, st.currentState, since, extraText)
 			}
 
 			//str += "</ul>\n"
 		}
 
-		str += "<br><br><small>" + config.Footer + "</small>"
+		str += "<br><br><center><small>" + config.Footer + "</small></center>"
 		str += "</body></html>"
 	}
 

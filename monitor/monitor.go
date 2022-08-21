@@ -127,15 +127,16 @@ func (m *Monitor) execOnStateChange(p probe.Probe, state string, numCycles int) 
 
 // ProbeResult is called from a probe
 func (m *Monitor) ProbeResult(p probe.Probe, d time.Duration, err error) {
+	m.m.Lock()
+	defer m.m.Unlock()
+
 	name := p.Name()
 
-	m.m.Lock()
 	st, has := m.status[name]
 	if !has {
 		st = &observation.ProbeStatus{}
 		m.status[name] = st
 	}
-	m.m.Unlock()
 
 	st.Probe = p
 	st.Latency = d
