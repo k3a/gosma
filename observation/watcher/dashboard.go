@@ -71,11 +71,14 @@ func (w *Dashboard) Init(n *yaml.Node) error {
 }
 
 func (w *Dashboard) indexHandler(wr http.ResponseWriter, r *http.Request) {
+	w.m.RLock()
+	defer w.m.RUnlock()
+
 	str := ""
 
 	if r.URL.Query().Get("content") != "1" {
 		str = `<!DOCTYPE html><html><head><title>` + config.C.Name + `</title>
-		<meta name="viewport" content="width=800, initial-scale=1">
+		<meta name="viewport" content="width=800">
 		<script>
 		function ensureIframeLoaded() {
 			var iframe = document.getElementById('content');
