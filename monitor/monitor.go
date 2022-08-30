@@ -208,7 +208,9 @@ func (m *Monitor) ProbeResult(p probe.Probe, d time.Duration, err error) {
 		// Record timetamp of this state change as the last thing.
 		// This has to be done _after_ running watchers/alerters/execs as they need to know
 		// the timestamp of the previous state change not the current one which is "now"
-		st.LastStateTransition = time.Now()
+		if st.NumCyclesInCurrentState == 1 {
+			st.LastStateTransition = time.Now()
+		}
 	}
 }
 
