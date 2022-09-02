@@ -22,6 +22,9 @@ probes:
     type: dns
     server: 8.8.8.8
     query: google.com
+  test_process:
+    type: process
+    process: watch
   group:
     description: group of probes, type and description attributes declared here will be inherited by the probes
     test_dns_nonexisten_mx:

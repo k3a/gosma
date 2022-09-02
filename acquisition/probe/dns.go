@@ -29,7 +29,7 @@ func (p *DNS) String() string {
 	if p.Server != "" {
 		attrs += ", server=" + p.Server
 	}
-	return fmt.Sprintf("Socket(%s)", attrs)
+	return fmt.Sprintf("DNS(%s)", attrs)
 }
 
 func (p *DNS) RunLoop(stop <-chan struct{}, res ResultReceiver) error {

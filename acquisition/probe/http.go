@@ -34,7 +34,7 @@ func (p *HTTP) String() string {
 	if p.StatusCode != 0 {
 		attrs += fmt.Sprintf(", status_code=%v", p.StatusCode)
 	}
-	return fmt.Sprintf("HTTPProbe(%s)", attrs)
+	return fmt.Sprintf("HTTP(%s)", attrs)
 }
 
 func (p *HTTP) RunLoop(stop <-chan struct{}, res ResultReceiver) error {

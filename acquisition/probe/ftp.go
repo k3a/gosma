@@ -20,7 +20,7 @@ func (p *FTP) err(f string, args ...interface{}) error {
 
 func (p *FTP) String() string {
 	attrs := "server=" + p.Server
-	return fmt.Sprintf("Socket(%s)", attrs)
+	return fmt.Sprintf("FTP(%s)", attrs)
 }
 
 func (p *FTP) RunLoop(stop <-chan struct{}, res ResultReceiver) error {
