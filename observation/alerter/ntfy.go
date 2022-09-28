@@ -16,11 +16,12 @@ import (
 type NTFY struct {
 	base
 
-	Server   string `yaml:"server"`
-	Username string `yaml:"username"`
-	Password string `yaml:"password"`
-	Priority string `yaml:"priority"`
-	Channel  string `yaml:"channel"`
+	Server     string `yaml:"server"`
+	Username   string `yaml:"username"`
+	Password   string `yaml:"password"`
+	Priority   string `yaml:"priority"`
+	PriorityOK string `yaml:"priority_ok"`
+	Channel    string `yaml:"channel"`
 }
 
 func (a *NTFY) err(estr string, args ...interface{}) error {
@@ -56,7 +57,7 @@ func (a *NTFY) Init(n *yaml.Node) error {
 	return nil
 }
 
-func (a *NTFY) sendAlert(title, text string) error {
+func (a *NTFY) sendAlert(title, text, priority string) error {
 	cli := &http.Client{Timeout: 30 * time.Second}
 
 	req, err := http.NewRequest("POST", a.Server+"/"+a.Channel, strings.NewReader(text))
@@ -70,7 +71,7 @@ func (a *NTFY) sendAlert(title, text string) error {
 
 	req.Header.Set("Content-Type", "text/plain")
 	req.Header.Set("t", title)
-	req.Header.Set("p", a.Priority)
+	req.Header.Set("p", priority)
 
 	var resp *http.Response
 	retry := 5
@@ -104,10 +105,14 @@ func (a *NTFY) ProbeStateChanged(p probe.Probe, st observation.ProbeStatus) (err
 
 	title := ""
 	desc := ""
+	priority := a.Priority
 
 	if st.CurrentState == "OK" {
 		title = fmt.Sprintf("%s alert: %s OK", config.C.Name, name)
 		desc = fmt.Sprintf("%s recovered after %s", name, time.Since(st.LastStateTransition).Round(time.Second))
+		if a.PriorityOK != "" {
+			priority = a.PriorityOK
+		}
 	} else {
 		title = fmt.Sprintf("%s alert: %s FAIL", config.C.Name, name)
 		desc = fmt.Sprintf("%s failed with %s", name, st.CurrentState)
@@ -119,7 +124,7 @@ func (a *NTFY) ProbeStateChanged(p probe.Probe, st observation.ProbeStatus) (err
 
 	// send notification
 	if a.shouldAlert(p, st) {
-		err = a.sendAlert(title, desc)
+		err = a.sendAlert(title, desc, priority)
 	}
 
 	return err
