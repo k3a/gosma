@@ -2,6 +2,7 @@ package alerter
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"strings"
@@ -60,7 +61,7 @@ func (a *NTFY) Init(n *yaml.Node) error {
 func (a *NTFY) sendAlert(title, text, priority string) error {
 	cli := &http.Client{Timeout: 30 * time.Second}
 
-	req, err := http.NewRequest("POST", a.Server+"/"+a.Channel, strings.NewReader(text))
+	req, err := http.NewRequest("POST", a.Server+"/"+a.Channel, nil)
 	if err != nil {
 		return err
 	}
@@ -77,6 +78,7 @@ func (a *NTFY) sendAlert(title, text, priority string) error {
 	retry := 5
 	sleep := 1
 	for retry > 0 {
+		req.Body = ioutil.NopCloser(strings.NewReader(text))
 		resp, err = cli.Do(req)
 		if err == nil && resp.StatusCode == 200 {
 			break
