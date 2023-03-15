@@ -1,8 +1,8 @@
 #!/bin/sh
 
 package_name="gosma"
-builddstamp=$(date -I)-$(git rev-parse --short HEAD)
-platforms=("linux/amd64" "linux/arm64" "windows/amd64" "darwin/amd64")
+buildstamp=$(date -I)-$(git rev-parse --short HEAD)
+platforms=("linux/amd64" "linux/arm64" "windows/amd64" "darwin/amd64" "darwin/arm64")
 
 for platform in "${platforms[@]}"
 do
@@ -15,7 +15,7 @@ do
 	fi	
 
 	GOOS=$GOOS GOARCH=$GOARCH CGO_ENABLED=0 \
-    go build -o $output_name -ldflags "-X config.Buildstamp=$buildstamp" .
+    go build -o $output_name -ldflags "-X github.com/k3a/gosma/config.Buildstamp=$buildstamp" .
 	if [ $? -ne 0 ]; then
    		echo 'An error has occurred!'
 		exit 1
