@@ -7,6 +7,11 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+var (
+	// Keys which cannot be used as probe identifiers
+	ReservedKeys = []string{"headers"}
+)
+
 type ResultReceiver interface {
 	// ProbeResult is called by a probe in a new gorountine
 	ProbeResult(p Probe, d time.Duration, err error)
@@ -40,14 +45,26 @@ func (pm Map) String() string {
 	return s[:len(s)-1]
 }
 
-func isMappingNodeWithScalarValues(node *yaml.Node) bool {
+func stringArrayContains(heystack []string, needle string) bool {
+	for _, it := range heystack {
+		if it == needle {
+			return true
+		}
+	}
+	return false
+}
+
+func isMappingNodeWithScalarValues(node *yaml.Node, exclusions []string) bool {
 	if node.Kind != yaml.MappingNode {
 		return false
 	}
 
 	key := true
+	var keyName string
 	for _, n := range node.Content {
-		if !key && n.Kind == yaml.MappingNode {
+		if key {
+			keyName = n.Value
+		} else if !key && n.Kind == yaml.MappingNode && !stringArrayContains(exclusions, keyName) {
 			return false
 		}
 
@@ -108,7 +125,7 @@ func FromYAMLNode(parent *base, node *yaml.Node) (Map, error) {
 				return nil, err
 			}
 
-			if isMappingNodeWithScalarValues(n) { // is leaf
+			if isMappingNodeWithScalarValues(n, ReservedKeys) { // is leaf
 				m[keyName], err = instantiateProbe(n, bp)
 				if err != nil {
 					return nil, err
