@@ -3,7 +3,6 @@ package probe
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"regexp"
 	"strings"
@@ -20,6 +19,8 @@ type HTTP struct {
 
 	ResponseMatch string `yaml:"response_match"`
 	StatusCode    int    `yaml:"status_code"`
+
+	inversed bool
 }
 
 func (p *HTTP) err(f string, args ...interface{}) error {
@@ -71,19 +72,30 @@ func (p *HTTP) RunLoop(stop <-chan struct{}, res ResultReceiver) error {
 		Timeout: p.Timeout(),
 	}
 
+	// inverse match?
+	match_pattern := p.ResponseMatch
+	p.inversed = strings.HasPrefix(match_pattern, "!")
+	if p.inversed {
+		match_pattern = match_pattern[1:]
+	}
+
 	for {
 		resp, err := cli.Do(req)
 		if err == nil {
 			if resp.StatusCode != p.StatusCode {
 				err = p.err("bad status code %d (expected %d)", resp.StatusCode, p.StatusCode)
-			} else if p.ResponseMatch != "" {
+			} else if match_pattern != "" {
 				var bts []byte
-				bts, err = ioutil.ReadAll(resp.Body)
+				bts, err = io.ReadAll(resp.Body)
 				if err == nil {
 					var matched bool
-					matched, err = regexp.MatchString(p.ResponseMatch, string(bts))
-					if err == nil && !matched {
-						err = p.err("pattern %s did not match the response body", p.ResponseMatch)
+					matched, err = regexp.MatchString(match_pattern, string(bts))
+					if err == nil && matched == p.inversed {
+						not := "not "
+						if p.inversed {
+							not = ""
+						}
+						err = p.err("pattern %s did %smatch the response body", match_pattern, not)
 					}
 				}
 			}
