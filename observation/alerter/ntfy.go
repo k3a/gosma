@@ -2,7 +2,7 @@ package alerter
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"strings"
@@ -78,7 +78,7 @@ func (a *NTFY) sendAlert(title, text, priority string) error {
 	retry := 5
 	sleep := 1
 	for retry > 0 {
-		req.Body = ioutil.NopCloser(strings.NewReader(text))
+		req.Body = io.NopCloser(strings.NewReader(text))
 		resp, err = cli.Do(req)
 		if err == nil && resp.StatusCode == 200 {
 			break

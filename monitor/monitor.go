@@ -16,6 +16,11 @@ import (
 	"github.com/k3a/gosma/observation/watcher"
 )
 
+// compareStateStrings compares whether two strings represent the same state (either both are OK or both are some error)
+func compareStateStrings(state1 string, state2 string) bool {
+	return state1 != "" && state2 != "" && ((state1 == "OK" && state2 == "OK") || (state1 != "OK" && state2 != "OK"))
+}
+
 // Monitor glues probes, watchers and alerters together
 type Monitor struct {
 	chStopProbes chan struct{}
@@ -149,15 +154,15 @@ func (m *Monitor) ProbeResult(p probe.Probe, d time.Duration, err error) {
 	const initialState = "OK" // the initial state we expect is OK
 
 	// state change
-	if st.CurrentState != newState {
+	if !compareStateStrings(st.CurrentState, newState) {
 		if st.CurrentState == "" {
 			st.CurrentState = initialState
 			st.LastStateTransition = time.Now()
 		}
 		st.PreviousState = st.CurrentState
-		st.CurrentState = newState
 		st.NumCyclesInCurrentState = 0
 	}
+	st.CurrentState = newState
 
 	// delay from startup
 	if config.C.Delay != 0 && !st.Unmuted {
@@ -201,7 +206,7 @@ func (m *Monitor) ProbeResult(p probe.Probe, d time.Duration, err error) {
 
 	// stuff to do for a state change after watchers/alerters are processed
 	// code in this block is also not run during "muted" period caused by config.C.delay
-	if st.PreviousState != st.CurrentState {
+	if !compareStateStrings(st.PreviousState, st.CurrentState) {
 		// run execs on state change
 		m.execOnStateChange(p, st.CurrentState, st.NumCyclesInCurrentState)
 
