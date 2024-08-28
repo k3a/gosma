@@ -19,8 +19,18 @@ type HTTP struct {
 
 	ResponseMatch string `yaml:"response_match"`
 	StatusCode    int    `yaml:"status_code"`
+	StatusCodes   []int  `yaml:"status_codes"`
 
 	inversed bool
+}
+
+func list_includes_status(status_list []int, status int) bool {
+	for _, v := range status_list {
+		if v == status {
+			return true
+		}
+	}
+	return false
 }
 
 func (p *HTTP) err(f string, args ...interface{}) error {
@@ -35,6 +45,9 @@ func (p *HTTP) String() string {
 	if p.StatusCode != 0 {
 		attrs += fmt.Sprintf(", status_code=%v", p.StatusCode)
 	}
+	if len(p.StatusCodes) > 0 {
+		attrs += fmt.Sprintf(", status_codes=%v", p.StatusCodes)
+	}
 	return fmt.Sprintf("HTTP(%s)", attrs)
 }
 
@@ -43,11 +56,12 @@ func (p *HTTP) RunLoop(stop <-chan struct{}, res ResultReceiver) error {
 	if p.URL == "" {
 		return p.err("parameter url is required")
 	}
+	if p.ResponseMatch == "" && p.StatusCode == 0 && len(p.StatusCodes) == 0 {
+		// just check for the HTTP 200 code if no specific parameter was set
+		p.StatusCode = 200
+	}
 	if p.Method == "" {
 		p.Method = "GET"
-	}
-	if p.StatusCode == 0 {
-		p.StatusCode = 200
 	}
 
 	// request
@@ -82,7 +96,9 @@ func (p *HTTP) RunLoop(stop <-chan struct{}, res ResultReceiver) error {
 	for {
 		resp, err := cli.Do(req)
 		if err == nil {
-			if resp.StatusCode != p.StatusCode {
+			if len(p.StatusCodes) > 0 && !list_includes_status(p.StatusCodes, resp.StatusCode) {
+				err = p.err("bad status code %d (expected one of %v)", resp.StatusCode, p.StatusCodes)
+			} else if p.StatusCode != 0 && resp.StatusCode != p.StatusCode {
 				err = p.err("bad status code %d (expected %d)", resp.StatusCode, p.StatusCode)
 			} else if match_pattern != "" {
 				var bts []byte
