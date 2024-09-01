@@ -127,8 +127,13 @@ func (a *SMTP) ProbeStateChanged(p probe.Probe, st observation.ProbeStatus) (err
 
 	// send notification
 	if a.shouldAlert(p, st) {
-		err = a.sendAlert(title, desc)
+		go func() {
+			err = a.sendAlert(title, desc)
+			if err != nil {
+				log.Printf("smtp alerter: error %v", err)
+			}
+		}()
 	}
 
-	return err
+	return nil
 }

@@ -126,8 +126,13 @@ func (a *NTFY) ProbeStateChanged(p probe.Probe, st observation.ProbeStatus) (err
 
 	// send notification
 	if a.shouldAlert(p, st) {
-		err = a.sendAlert(title, desc, priority)
+		go func() {
+			err = a.sendAlert(title, desc, priority)
+			if err != nil {
+				log.Printf("ntfy alerter: error %v", err)
+			}
+		}()
 	}
 
-	return err
+	return nil
 }
