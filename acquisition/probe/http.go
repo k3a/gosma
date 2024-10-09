@@ -56,8 +56,8 @@ func (p *HTTP) RunLoop(stop <-chan struct{}, res ResultReceiver) error {
 	if p.URL == "" {
 		return p.err("parameter url is required")
 	}
-	if p.ResponseMatch == "" && p.StatusCode == 0 && len(p.StatusCodes) == 0 {
-		// just check for the HTTP 200 code if no specific parameter was set
+	if len(p.StatusCodes) == 0 && p.StatusCode == 0 {
+		// by default expect status 200
 		p.StatusCode = 200
 	}
 	if p.Method == "" {
@@ -111,7 +111,7 @@ func (p *HTTP) RunLoop(stop <-chan struct{}, res ResultReceiver) error {
 						if p.inversed {
 							not = ""
 						}
-						err = p.err("pattern %s did %smatch the response body", match_pattern, not)
+						err = p.err("pattern '%s' did %smatch the response body", match_pattern, not)
 					}
 				}
 			}
