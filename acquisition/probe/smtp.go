@@ -61,7 +61,8 @@ func (p *SMTP) RunLoop(stop <-chan struct{}, res ResultReceiver) error {
 				return err
 			}
 
-			ok, err := expect("220")
+			var ok bool
+			ok, err = expect("220")
 			if err == nil {
 				if !ok {
 					err = p.err("did not receive an expected 220 welcome code")
