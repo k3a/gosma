@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/k3a/gosma/config"
 )
@@ -96,11 +97,18 @@ func (p *HTTP) RunLoop(stop <-chan struct{}, res ResultReceiver) error {
 	for {
 		resp, err := cli.Do(req)
 		if err == nil {
-			if len(p.StatusCodes) > 0 && !list_includes_status(p.StatusCodes, resp.StatusCode) {
+			if resp.TLS != nil && len(resp.TLS.PeerCertificates) > 0 {
+				cert := resp.TLS.PeerCertificates[0]
+				if time.Until(cert.NotAfter) < 10*24*time.Hour {
+					err = p.err("TLS cert expiring soon")
+				}
+			}
+
+			if err == nil && len(p.StatusCodes) > 0 && !list_includes_status(p.StatusCodes, resp.StatusCode) {
 				err = p.err("bad status code %d (expected one of %v)", resp.StatusCode, p.StatusCodes)
-			} else if p.StatusCode != 0 && resp.StatusCode != p.StatusCode {
+			} else if err == nil && p.StatusCode != 0 && resp.StatusCode != p.StatusCode {
 				err = p.err("bad status code %d (expected %d)", resp.StatusCode, p.StatusCode)
-			} else if match_pattern != "" {
+			} else if err == nil && match_pattern != "" {
 				var bts []byte
 				bts, err = io.ReadAll(resp.Body)
 				if err == nil {
