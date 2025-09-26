@@ -2,6 +2,7 @@ package watcher
 
 import (
 	"fmt"
+	"html"
 	"log"
 	"net/http"
 	"sort"
@@ -28,7 +29,6 @@ type Dashboard struct {
 
 	YListen string `yaml:"listen"`
 
-	srv                     *http.Server
 	m                       sync.RWMutex
 	status                  map[string]*dashboardServiceStatus
 	lowestUpdateIntervalSec int
@@ -140,19 +140,18 @@ func (w *Dashboard) indexHandler(wr http.ResponseWriter, r *http.Request) {
 			display: inline-block;
 			font-weight: bold;
 		}
-		.box-wide .title {
-			max-width: 400px;
-		}
 		.box {
 			margin: 5px;
 			background-color: #222;
 			display: inline-block;
-			min-width: 230px;
+			width: 230px;
 			padding: 5px;
 			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
 		}
 		.box-wide {
-			min-width: 400px;
+			min-width: 485px;
 		}
 		</style>`
 		str += "</head><body>\n"
@@ -183,7 +182,8 @@ func (w *Dashboard) indexHandler(wr http.ResponseWriter, r *http.Request) {
 				since := util.CompactDuration(time.Since(st.lastStateTransition), 2)
 
 				str += fmt.Sprintf("<div class=\"box %s\" title=\"%s\"><div class=\"title\" title=\"%s\">%s</div><br><span style=\"color:%s\">%s</span> for %s%s</div>\n",
-					extraCls, st.desc, name, name, col, st.currentState, since, extraText)
+					html.EscapeString(extraCls), html.EscapeString(st.currentState), html.EscapeString(name+": "+st.desc), html.EscapeString(name),
+					html.EscapeString(col), html.EscapeString(st.currentState), html.EscapeString(since), html.EscapeString(extraText))
 			}
 
 			//str += "</ul>\n"
