@@ -25,11 +25,11 @@ type NTFY struct {
 	Channel    string `yaml:"channel"`
 }
 
-func (a *NTFY) err(estr string, args ...interface{}) error {
+func (a *NTFY) err(estr string, args ...any) error {
 	return fmt.Errorf("ntfy watcher: "+estr, args...)
 }
 
-func (a *NTFY) log(str string, args ...interface{}) {
+func (a *NTFY) log(str string, args ...any) {
 	log.Printf("ntfy watcher: "+str, args...)
 }
 

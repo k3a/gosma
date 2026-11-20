@@ -14,7 +14,7 @@ type FTP struct {
 	TLS    bool   `yaml:"tls"`
 }
 
-func (p *FTP) err(f string, args ...interface{}) error {
+func (p *FTP) err(f string, args ...any) error {
 	return fmt.Errorf("ftp: "+f, args...)
 }
 
@@ -64,8 +64,8 @@ func (p *FTP) RunLoop(stop <-chan struct{}, res ResultReceiver) error {
 		}
 
 		if conn != nil {
-			conn.Write([]byte("QUIT\r\n"))
-			conn.Close()
+			_, _ = conn.Write([]byte("QUIT\r\n"))
+			_ = conn.Close()
 		}
 
 		go res.ProbeResult(p, p.runDuration(), err)

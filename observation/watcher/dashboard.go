@@ -34,11 +34,11 @@ type Dashboard struct {
 	lowestUpdateIntervalSec int
 }
 
-func (w *Dashboard) err(estr string, args ...interface{}) error {
+func (w *Dashboard) err(estr string, args ...any) error {
 	return fmt.Errorf("dashboard watcher: "+estr, args...)
 }
 
-func (w *Dashboard) log(str string, args ...interface{}) {
+func (w *Dashboard) log(str string, args ...any) {
 	log.Printf("dashboard watcher: "+str, args...)
 }
 
@@ -194,7 +194,7 @@ func (w *Dashboard) indexHandler(wr http.ResponseWriter, r *http.Request) {
 	}
 
 	wr.Header().Set("Content-Type", "text/html; charset=UTF-8")
-	wr.Write([]byte(str))
+	_, _ = wr.Write([]byte(str))
 }
 
 func (w *Dashboard) ProbeStateChanged(p probe.Probe, ost observation.ProbeStatus) error {

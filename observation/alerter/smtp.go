@@ -27,11 +27,11 @@ type SMTP struct {
 	DisableTLS bool   `yaml:"disable_tls"`
 }
 
-func (a *SMTP) err(estr string, args ...interface{}) error {
+func (a *SMTP) err(estr string, args ...any) error {
 	return fmt.Errorf("smtp alerter: "+estr, args...)
 }
 
-func (a *SMTP) log(str string, args ...interface{}) {
+func (a *SMTP) log(str string, args ...any) {
 	log.Printf("smtp alerter: "+str, args...)
 }
 
@@ -78,7 +78,7 @@ func (a *SMTP) sendAlert(title, text string) error {
 		if err == nil {
 			err = c.Mail(a.From)
 			if err == nil {
-				for _, addr := range strings.Split(a.To, ",") {
+				for addr := range strings.SplitSeq(a.To, ",") {
 					if err = c.Rcpt(addr); err != nil {
 						break
 					}
@@ -92,7 +92,7 @@ func (a *SMTP) sendAlert(title, text string) error {
 							err = cerr
 						}
 						if err == nil {
-							err = c.Quit()
+							_ = c.Quit()
 						}
 					}
 				}

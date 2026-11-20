@@ -2,6 +2,8 @@ package probe
 
 import (
 	"fmt"
+	"slices"
+	"strings"
 	"time"
 
 	"gopkg.in/yaml.v3"
@@ -38,20 +40,15 @@ type Probe interface {
 type Map map[string]Probe
 
 func (pm Map) String() string {
-	s := ""
+	var s strings.Builder
 	for k, v := range pm {
-		s += fmt.Sprintf("%s: %s\n", k, v)
+		fmt.Fprintf(&s, "%s: %s\n", k, v)
 	}
-	return s[:len(s)-1]
+	return s.String()[:len(s.String())-1]
 }
 
 func stringArrayContains(heystack []string, needle string) bool {
-	for _, it := range heystack {
-		if it == needle {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(heystack, needle)
 }
 
 func isMappingNodeWithScalarValues(node *yaml.Node, exclusions []string) bool {
@@ -96,8 +93,8 @@ func instantiateProbe(n *yaml.Node, bp *base) (Probe, error) {
 	case "process":
 		p = &Process{base: *bp}
 	default:
-		var dec interface{}
-		n.Decode(&dec)
+		var dec any
+		_ = n.Decode(&dec)
 		return nil, fmt.Errorf("unknown type %s for %#v", t, dec)
 	}
 

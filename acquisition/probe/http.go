@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"regexp"
+	"slices"
 	"strings"
 	"time"
 
@@ -26,15 +27,10 @@ type HTTP struct {
 }
 
 func list_includes_status(status_list []int, status int) bool {
-	for _, v := range status_list {
-		if v == status {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(status_list, status)
 }
 
-func (p *HTTP) err(f string, args ...interface{}) error {
+func (p *HTTP) err(f string, args ...any) error {
 	return fmt.Errorf("http: "+f, args...)
 }
 

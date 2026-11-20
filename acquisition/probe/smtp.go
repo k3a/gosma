@@ -14,7 +14,7 @@ type SMTP struct {
 	TLS    bool   `yaml:"tls"`
 }
 
-func (p *SMTP) err(f string, args ...interface{}) error {
+func (p *SMTP) err(f string, args ...any) error {
 	return fmt.Errorf("smtp: "+f, args...)
 }
 
@@ -89,8 +89,8 @@ func (p *SMTP) RunLoop(stop <-chan struct{}, res ResultReceiver) error {
 		}
 
 		if conn != nil {
-			conn.Write([]byte("QUIT\r\n"))
-			conn.Close()
+			_, _ = conn.Write([]byte("QUIT\r\n"))
+			_ = conn.Close()
 		}
 
 		go res.ProbeResult(p, p.runDuration(), err)

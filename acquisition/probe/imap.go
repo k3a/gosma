@@ -15,7 +15,7 @@ type IMAP struct {
 	TLS    bool   `yaml:"tls"`
 }
 
-func (p *IMAP) err(f string, args ...interface{}) error {
+func (p *IMAP) err(f string, args ...any) error {
 	return fmt.Errorf("imap: "+f, args...)
 }
 
@@ -57,8 +57,8 @@ func (p *IMAP) RunLoop(stop <-chan struct{}, res ResultReceiver) error {
 		}
 
 		if conn != nil {
-			conn.Write([]byte("001 LOGOUT\r\n"))
-			conn.Close()
+			_, _ = conn.Write([]byte("001 LOGOUT\r\n"))
+			_ = conn.Close()
 		}
 
 		go res.ProbeResult(p, p.runDuration(), err)

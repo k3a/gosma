@@ -17,7 +17,7 @@ type Socket struct {
 	TLSServerName string `yaml:"tls_server_name"`
 }
 
-func (p *Socket) err(f string, args ...interface{}) error {
+func (p *Socket) err(f string, args ...any) error {
 	return fmt.Errorf("socket: "+f, args...)
 }
 
@@ -59,7 +59,7 @@ func (p *Socket) RunLoop(stop <-chan struct{}, res ResultReceiver) error {
 		}
 
 		if err == nil {
-			conn.Close()
+			_ = conn.Close()
 		}
 
 		go res.ProbeResult(p, p.runDuration(), err)

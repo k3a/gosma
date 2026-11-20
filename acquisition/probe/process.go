@@ -2,7 +2,6 @@ package probe
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"path"
 	"strings"
@@ -16,7 +15,7 @@ type Process struct {
 	Process string `yaml:"process"`
 }
 
-func (p *Process) err(f string, args ...interface{}) error {
+func (p *Process) err(f string, args ...any) error {
 	return fmt.Errorf("process: "+f, args...)
 }
 
@@ -40,9 +39,6 @@ func (p *Process) RunLoop(stop <-chan struct{}, res ResultReceiver) error {
 		for {
 			dirs, err := d.Readdirnames(512)
 			if err != nil {
-				if err == io.EOF {
-					err = nil
-				}
 				break searchLoop
 			}
 

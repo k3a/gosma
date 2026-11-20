@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/k3a/gosma/config"
@@ -105,20 +106,21 @@ func (bp *base) String() string {
 		return "<nil>"
 	}
 
-	indent := ""
+	var indent strings.Builder
 	p := bp.Parent()
 	for !reflect.ValueOf(p).IsNil() {
-		indent += " "
+		indent.WriteString(" ")
 		p = p.Parent()
 	}
 
-	s := fmt.Sprintf("BaseProbe with %d children:\n", len(bp.children))
+	var s strings.Builder
+	fmt.Fprintf(&s, "BaseProbe with %d children:\n", len(bp.children))
 
 	for k, v := range bp.children {
-		s += fmt.Sprintf("%s %s: %s\n", indent, k, v.String())
+		fmt.Fprintf(&s, "%s %s: %s\n", indent.String(), k, v.String())
 	}
 
-	return s[:len(s)-1]
+	return s.String()[:len(s.String())-1]
 }
 
 func instantiateBaseProbe(parent *base, n *yaml.Node, name string) (*base, error) {

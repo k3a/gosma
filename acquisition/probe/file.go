@@ -36,7 +36,7 @@ type File struct {
 	BtimeNotOlderThan time.Duration `yaml:"btime_not_older_than"`
 }
 
-func (p *File) err(f string, args ...interface{}) error {
+func (p *File) err(f string, args ...any) error {
 	return fmt.Errorf("file: "+f, args...)
 }
 

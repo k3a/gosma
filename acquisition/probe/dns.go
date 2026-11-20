@@ -17,7 +17,7 @@ type DNS struct {
 	Query     string `yaml:"query"`
 }
 
-func (p *DNS) err(f string, args ...interface{}) error {
+func (p *DNS) err(f string, args ...any) error {
 	return fmt.Errorf("dns: "+f, args...)
 }
 
