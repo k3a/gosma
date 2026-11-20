@@ -212,6 +212,11 @@ func (w *Dashboard) ProbeStateChanged(p probe.Probe, ost observation.ProbeStatus
 	st.latency = ost.Latency
 	st.currentState = ost.CurrentState
 	st.lastStateTransition = ost.LastStateTransition
+	if ost.NumCyclesInCurrentState == 1 && ost.PreviousState != ost.CurrentState {
+		// The monitor passes the timestamp of the previous transition on the first
+		// cycle after a change (alerters need it), so use "now" for display.
+		st.lastStateTransition = time.Now()
+	}
 
 	if st.desc == "" {
 		st.desc = p.Description()
